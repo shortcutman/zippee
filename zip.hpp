@@ -5,10 +5,12 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <expected>
 #include <string>
 #include <iostream>
+#include <span>
 
 namespace zip {
 
@@ -28,6 +30,6 @@ struct EOCD {
     friend std::ostream& operator<<(std::ostream& os, const EOCD& s);
 };
 
-std::expected<EOCD, std::string> search_for_eocd(std::istream& is);
+std::expected<EOCD, std::string> search_for_eocd(std::span<std::byte> data);
 
 }
