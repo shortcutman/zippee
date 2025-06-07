@@ -1,10 +1,12 @@
 
 #include "zip.hpp"
 
+#include <cstdint>
 #include <fstream>
 #include <iostream>
 #include <string>
-#include <cstdint>
+#include <vector>
+
 
 void println(const char* c) {
     std::cout << c << std::endl;
@@ -19,7 +21,27 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto result = zip::search_for_eocd(file);
+    auto size = file.tellg();
+    std::cout << "size: " << size << std::endl;
+    
+    std::vector<std::byte> data;
+    data.reserve(size);
+    file.seekg(0);
+
+    std::cout << "v size: " << data.size() << std::endl;
+
+    for (size_t i; i < size; i++) {
+        auto getbyte = file.get();
+        if (getbyte == std::ifstream::traits_type::eof()) {
+            break;
+        }
+
+        data.push_back(std::byte{static_cast<uint8_t>(getbyte)});
+    }
+
+    std::cout << "v size: " << data.size() << std::endl;
+
+    auto result = zip::search_for_eocd(std::span{data.begin(), data.end()});
     std::cout << result.value() << std::endl;
 
     return 1;
