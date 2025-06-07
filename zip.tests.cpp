@@ -20,7 +20,6 @@ std::array<std::byte, sizeof...(Ts)> make_bytes(Ts&&... args) noexcept {
 
 TEST(ZipTests, search_for_eocd_empty) {
     auto data = make_bytes(
-        /*0x00,*/
         0x50, 0x4B, 0x05, 0x06,
         0x00, 0x00,
         0x00, 0x00,
@@ -47,7 +46,6 @@ TEST(ZipTests, search_for_eocd_empty) {
 
 TEST(ZipTests, search_for_eocd_values_no_comment) {
     auto data = make_bytes(
-        /*0x00,*/
         0x50, 0x4B, 0x05, 0x06,
         0x01, 0x01,
         0x01, 0x01,
@@ -74,7 +72,6 @@ TEST(ZipTests, search_for_eocd_values_no_comment) {
 
 TEST(ZipTests, search_for_eocd_values_comment) {
     auto data = make_bytes(
-        /*0x00,*/
         0x50, 0x4B, 0x05, 0x06,
         0x01, 0x01,
         0x01, 0x01,
@@ -107,4 +104,22 @@ TEST(ZipTests, search_for_eocd_failure_length) {
 
     auto result = zip::search_for_eocd(std::span<std::byte>(data));
     EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "Not enough bytes for an EOCD.");
+}
+
+TEST(ZipTests, search_for_eocd_failure_no_signature) {
+    auto data = make_bytes(
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00
+    );
+
+    auto result = zip::search_for_eocd(std::span<std::byte>(data));
+    EXPECT_FALSE(result.has_value());
+    EXPECT_EQ(result.error(), "Unable to find EOCD.");
 }

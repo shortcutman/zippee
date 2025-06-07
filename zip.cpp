@@ -30,7 +30,7 @@ std::expected<zip::EOCD, std::string> zip::search_for_eocd(std::span<std::byte> 
 
     size_t eof = data.size();
     if (eof < EOCD::SPEC_MIN_SIZE) {
-        return std::unexpected("Not enough bytes for an EOCD");
+        return std::unexpected("Not enough bytes for an EOCD.");
     }
 
     for (ssize_t seekPos = eof - 22; seekPos >= 0; seekPos--) {
@@ -58,5 +58,5 @@ std::expected<zip::EOCD, std::string> zip::search_for_eocd(std::span<std::byte> 
         return s;
     }
 
-    return std::unexpected("Unable to find EOCD");
+    return std::unexpected("Unable to find EOCD.");
 }
