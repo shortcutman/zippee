@@ -63,6 +63,18 @@ std::expected<zip::EOCD, std::string> zip::search_for_eocd(std::span<std::byte> 
     return std::unexpected("Unable to find EOCD.");
 }
 
+std::ostream& zip::operator<<(std::ostream& os, const CentralDirectoryHeader& h) {
+    os << "CDH: Signature: 0x" << std::hex << h.signature;
+
+    if (h.file_name.empty()) {
+        os << " No filename";
+    } else {
+        os << " Filename: " << h.file_name;
+    }
+
+    return os;
+}
+
 std::vector<zip::CentralDirectoryHeader> zip::read_central_directory_headers(std::span<std::byte> data) {
     std::vector<zip::CentralDirectoryHeader> headers;
 

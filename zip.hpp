@@ -55,6 +55,8 @@ struct CentralDirectoryHeader {
     std::string file_name;
     std::string file_comment;
     std::vector<std::byte> extra_field;
+
+    friend std::ostream& operator<<(std::ostream& os, const CentralDirectoryHeader& s);
 };
 
 std::vector<CentralDirectoryHeader> read_central_directory_headers(std::span<std::byte> data);

@@ -44,5 +44,11 @@ int main(int argc, char** argv) {
     auto result = zip::search_for_eocd(std::span{data.begin(), data.end()});
     std::cout << result.value() << std::endl;
 
-    return 1;
+    auto centralDir = std::span{data.begin() + result.value().offset_start_central_directory, data.end()};
+    auto headers = zip::read_central_directory_headers(centralDir);
+    for (auto& h : headers) {
+        std::cout << h << std::endl;
+    }
+
+    return 0;
 }
