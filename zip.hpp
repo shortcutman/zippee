@@ -11,6 +11,7 @@
 #include <string>
 #include <iostream>
 #include <span>
+#include <vector>
 
 namespace zip {
 
@@ -31,5 +32,30 @@ struct EOCD {
 };
 
 std::expected<EOCD, std::string> search_for_eocd(std::span<std::byte> data);
+
+struct CentralDirectoryHeader {
+    uint32_t signature;
+    uint16_t version_made_by;
+    uint16_t version_needed;
+    uint16_t general_purpose_bit_flag;
+    uint16_t compression_method;
+    uint16_t last_mod_file_time;
+    uint16_t last_mod_file_date;
+    uint32_t crc_32;
+    uint32_t compressed_size;
+    uint32_t uncompressed_size;
+    uint16_t file_name_length;
+    uint16_t extra_field_length;
+    uint16_t file_comment_length;
+    uint16_t disk_number_start;
+    uint16_t internal_file_attributes;
+    uint32_t external_file_attributes;
+    uint32_t relative_offset_of_local_header;
+
+    std::string file_name;
+    std::string file_comment;
+};
+
+std::vector<CentralDirectoryHeader> read_central_directory_headers(std::span<std::byte> data);
 
 }

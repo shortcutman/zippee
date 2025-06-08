@@ -123,3 +123,55 @@ TEST(ZipTests, search_for_eocd_failure_no_signature) {
     EXPECT_FALSE(result.has_value());
     EXPECT_EQ(result.error(), "Unable to find EOCD.");
 }
+
+TEST(ZipTests, read_no_central_directory_header) {
+    auto data = make_bytes(
+    );
+
+    auto result = zip::read_central_directory_headers(std::span{data});
+    EXPECT_TRUE(result.empty());
+}
+
+TEST(ZipTests, read_one_central_directory_header) {
+    auto data = make_bytes(
+        0x50, 0x4B, 0x01, 0x02,
+        0x14, 0x03,
+        0x14, 0x00,
+        0x08, 0x00,
+        0x08, 0x00,
+        0x1A, 0x58,
+        0x7F, 0x5A,
+        0xF5, 0x9D, 0x80, 0x54,
+        0x64, 0x01, 0x00, 0x00,
+        0x02, 0x02, 0x00, 0x00,
+        0x20, 0x00,
+        0x20, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00, 0xA4, 0x81,
+        0x00, 0x00, 0x00, 0x00
+    );
+
+    auto result = zip::read_central_directory_headers(std::span{data});
+    ASSERT_FALSE(result.empty());
+
+    auto frontHeader = result.front();
+    EXPECT_EQ(frontHeader.signature, 0x02014b50);
+    EXPECT_EQ(frontHeader.version_made_by, 0x0314);
+    EXPECT_EQ(frontHeader.version_needed, 0x14);
+    EXPECT_EQ(frontHeader.general_purpose_bit_flag, 0x08);
+    EXPECT_EQ(frontHeader.compression_method, 0x08);
+    EXPECT_EQ(frontHeader.last_mod_file_time, 0x581a);
+    EXPECT_EQ(frontHeader.last_mod_file_date, 0x5a7f);
+    EXPECT_EQ(frontHeader.crc_32, 0x54809df5);
+    EXPECT_EQ(frontHeader.compressed_size, 0x0164);
+    EXPECT_EQ(frontHeader.uncompressed_size, 0x0202);
+    EXPECT_EQ(frontHeader.file_name_length, 0x20);
+    EXPECT_EQ(frontHeader.extra_field_length, 0x20);
+    EXPECT_EQ(frontHeader.file_comment_length, 0x00);
+    EXPECT_EQ(frontHeader.disk_number_start, 0x00);
+    EXPECT_EQ(frontHeader.internal_file_attributes, 0x00);
+    EXPECT_EQ(frontHeader.external_file_attributes, 0x81a40000);
+    EXPECT_EQ(frontHeader.relative_offset_of_local_header, 0x00);
+}
