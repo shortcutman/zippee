@@ -91,6 +91,13 @@ std::vector<zip::CentralDirectoryHeader> zip::read_central_directory_headers(std
         read_adv(h.external_file_attributes, data);
         read_adv(h.relative_offset_of_local_header, data);
 
+        h.file_name.insert(0, reinterpret_cast<char*>(&data[0]), h.file_name_length);
+        data = data.subspan(h.file_name_length);
+        h.extra_field.insert(h.extra_field.begin(), data.begin(), data.begin() + h.extra_field_length);
+        data = data.subspan(h.extra_field_length);
+        h.file_comment.insert(0, reinterpret_cast<char*>(&data[0]), h.file_comment_length);
+        data = data.subspan(h.file_comment_length);
+
         headers.push_back(h);
     }
 

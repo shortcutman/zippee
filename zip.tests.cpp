@@ -132,7 +132,7 @@ TEST(ZipTests, read_no_central_directory_header) {
     EXPECT_TRUE(result.empty());
 }
 
-TEST(ZipTests, read_one_central_directory_header) {
+TEST(ZipTests, read_one_central_directory_header_dynamic_content) {
     auto data = make_bytes(
         0x50, 0x4B, 0x01, 0x02,
         0x14, 0x03,
@@ -144,8 +144,61 @@ TEST(ZipTests, read_one_central_directory_header) {
         0xF5, 0x9D, 0x80, 0x54,
         0x64, 0x01, 0x00, 0x00,
         0x02, 0x02, 0x00, 0x00,
-        0x20, 0x00,
-        0x20, 0x00,
+        0x05, 0x00,
+        0x05, 0x00,
+        0x05, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00, 0xA4, 0x81,
+        0x00, 0x00, 0x00, 0x00,
+        'h', 'e', 'l', 'l', 'o',
+        0x01, 0x02, 0x03, 0x04, 0x05,
+        't', 'h', 'e', 'r', 'e'
+    );
+
+    auto result = zip::read_central_directory_headers(std::span{data});
+    ASSERT_FALSE(result.empty());
+
+    auto frontHeader = result.front();
+    EXPECT_EQ(frontHeader.signature, 0x02014b50);
+    EXPECT_EQ(frontHeader.version_made_by, 0x0314);
+    EXPECT_EQ(frontHeader.version_needed, 0x14);
+    EXPECT_EQ(frontHeader.general_purpose_bit_flag, 0x08);
+    EXPECT_EQ(frontHeader.compression_method, 0x08);
+    EXPECT_EQ(frontHeader.last_mod_file_time, 0x581a);
+    EXPECT_EQ(frontHeader.last_mod_file_date, 0x5a7f);
+    EXPECT_EQ(frontHeader.crc_32, 0x54809df5);
+    EXPECT_EQ(frontHeader.compressed_size, 0x0164);
+    EXPECT_EQ(frontHeader.uncompressed_size, 0x0202);
+    EXPECT_EQ(frontHeader.file_name_length, 0x05);
+    EXPECT_EQ(frontHeader.extra_field_length, 0x05);
+    EXPECT_EQ(frontHeader.file_comment_length, 0x05);
+    EXPECT_EQ(frontHeader.disk_number_start, 0x00);
+    EXPECT_EQ(frontHeader.internal_file_attributes, 0x00);
+    EXPECT_EQ(frontHeader.external_file_attributes, 0x81a40000);
+    EXPECT_EQ(frontHeader.relative_offset_of_local_header, 0x00);
+    EXPECT_EQ(frontHeader.file_name, "hello");
+    EXPECT_TRUE(std::equal(
+        frontHeader.extra_field.begin(),
+        frontHeader.extra_field.end(),
+        make_bytes(0x01, 0x02, 0x03, 0x04, 0x05).begin()));
+    EXPECT_EQ(frontHeader.file_comment, "there");
+}
+
+TEST(ZipTests, read_one_central_directory_header_no_dynamic_content) {
+    auto data = make_bytes(
+        0x50, 0x4B, 0x01, 0x02,
+        0x14, 0x03,
+        0x14, 0x00,
+        0x08, 0x00,
+        0x08, 0x00,
+        0x1A, 0x58,
+        0x7F, 0x5A,
+        0xF5, 0x9D, 0x80, 0x54,
+        0x64, 0x01, 0x00, 0x00,
+        0x02, 0x02, 0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
         0x00, 0x00,
         0x00, 0x00,
         0x00, 0x00,
@@ -167,11 +220,247 @@ TEST(ZipTests, read_one_central_directory_header) {
     EXPECT_EQ(frontHeader.crc_32, 0x54809df5);
     EXPECT_EQ(frontHeader.compressed_size, 0x0164);
     EXPECT_EQ(frontHeader.uncompressed_size, 0x0202);
-    EXPECT_EQ(frontHeader.file_name_length, 0x20);
-    EXPECT_EQ(frontHeader.extra_field_length, 0x20);
+    EXPECT_EQ(frontHeader.file_name_length, 0x00);
+    EXPECT_EQ(frontHeader.extra_field_length, 0x00);
     EXPECT_EQ(frontHeader.file_comment_length, 0x00);
     EXPECT_EQ(frontHeader.disk_number_start, 0x00);
     EXPECT_EQ(frontHeader.internal_file_attributes, 0x00);
     EXPECT_EQ(frontHeader.external_file_attributes, 0x81a40000);
     EXPECT_EQ(frontHeader.relative_offset_of_local_header, 0x00);
+    EXPECT_TRUE(frontHeader.file_name.empty());
+    EXPECT_TRUE(frontHeader.extra_field.empty());
+    EXPECT_TRUE(frontHeader.file_comment.empty());
+}
+
+TEST(ZipTests, read_two_central_directory_header_dynamic_content) {
+    auto data = make_bytes(
+        0x50, 0x4B, 0x01, 0x02,
+        0x14, 0x03,
+        0x14, 0x00,
+        0x08, 0x00,
+        0x08, 0x00,
+        0x1A, 0x58,
+        0x7F, 0x5A,
+        0xF5, 0x9D, 0x80, 0x54,
+        0x64, 0x01, 0x00, 0x00,
+        0x02, 0x02, 0x00, 0x00,
+        0x05, 0x00,
+        0x05, 0x00,
+        0x05, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00, 0xA4, 0x81,
+        0x00, 0x00, 0x00, 0x00,
+        'h', 'e', 'l', 'l', 'o',
+        0x01, 0x02, 0x03, 0x04, 0x05,
+        't', 'h', 'e', 'r', 'e',
+        0x50, 0x4B, 0x01, 0x02,
+        0x14, 0x03,
+        0x14, 0x00,
+        0x08, 0x00,
+        0x08, 0x00,
+        0x1A, 0x58,
+        0x7F, 0x5A,
+        0xF5, 0x9D, 0x80, 0x54,
+        0x64, 0x01, 0x00, 0x00,
+        0x02, 0x02, 0x00, 0x00,
+        0x05, 0x00,
+        0x05, 0x00,
+        0x05, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00, 0xA4, 0x81,
+        0x00, 0x00, 0x00, 0x00,
+        'h', 'e', 'l', 'l', 'o',
+        0x01, 0x02, 0x03, 0x04, 0x05,
+        't', 'h', 'e', 'r', 'e'
+    );
+
+    auto result = zip::read_central_directory_headers(std::span{data});
+    ASSERT_EQ(result.size(), 2);
+
+    for (auto& header : result) {
+        EXPECT_EQ(header.signature, 0x02014b50);
+        EXPECT_EQ(header.version_made_by, 0x0314);
+        EXPECT_EQ(header.version_needed, 0x14);
+        EXPECT_EQ(header.general_purpose_bit_flag, 0x08);
+        EXPECT_EQ(header.compression_method, 0x08);
+        EXPECT_EQ(header.last_mod_file_time, 0x581a);
+        EXPECT_EQ(header.last_mod_file_date, 0x5a7f);
+        EXPECT_EQ(header.crc_32, 0x54809df5);
+        EXPECT_EQ(header.compressed_size, 0x0164);
+        EXPECT_EQ(header.uncompressed_size, 0x0202);
+        EXPECT_EQ(header.file_name_length, 0x05);
+        EXPECT_EQ(header.extra_field_length, 0x05);
+        EXPECT_EQ(header.file_comment_length, 0x05);
+        EXPECT_EQ(header.disk_number_start, 0x00);
+        EXPECT_EQ(header.internal_file_attributes, 0x00);
+        EXPECT_EQ(header.external_file_attributes, 0x81a40000);
+        EXPECT_EQ(header.relative_offset_of_local_header, 0x00);
+        EXPECT_EQ(header.file_name, "hello");
+        EXPECT_TRUE(std::equal(
+            header.extra_field.begin(),
+            header.extra_field.end(),
+            make_bytes(0x01, 0x02, 0x03, 0x04, 0x05).begin()));
+        EXPECT_EQ(header.file_comment, "there");
+    }
+}
+
+TEST(ZipTests, read_two_central_directory_header_no_dynamic_content) {
+    auto data = make_bytes(
+        0x50, 0x4B, 0x01, 0x02,
+        0x14, 0x03,
+        0x14, 0x00,
+        0x08, 0x00,
+        0x08, 0x00,
+        0x1A, 0x58,
+        0x7F, 0x5A,
+        0xF5, 0x9D, 0x80, 0x54,
+        0x64, 0x01, 0x00, 0x00,
+        0x02, 0x02, 0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00, 0xA4, 0x81,
+        0x00, 0x00, 0x00, 0x00,
+        0x50, 0x4B, 0x01, 0x02,
+        0x14, 0x03,
+        0x14, 0x00,
+        0x08, 0x00,
+        0x08, 0x00,
+        0x1A, 0x58,
+        0x7F, 0x5A,
+        0xF5, 0x9D, 0x80, 0x54,
+        0x64, 0x01, 0x00, 0x00,
+        0x02, 0x02, 0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00, 0xA4, 0x81,
+        0x00, 0x00, 0x00, 0x00
+    );
+
+    auto result = zip::read_central_directory_headers(std::span{data});
+    ASSERT_EQ(result.size(), 2);
+
+    auto frontHeader = result.front();
+
+    for (auto& header : result) {
+        EXPECT_EQ(frontHeader.signature, 0x02014b50);
+        EXPECT_EQ(frontHeader.version_made_by, 0x0314);
+        EXPECT_EQ(frontHeader.version_needed, 0x14);
+        EXPECT_EQ(frontHeader.general_purpose_bit_flag, 0x08);
+        EXPECT_EQ(frontHeader.compression_method, 0x08);
+        EXPECT_EQ(frontHeader.last_mod_file_time, 0x581a);
+        EXPECT_EQ(frontHeader.last_mod_file_date, 0x5a7f);
+        EXPECT_EQ(frontHeader.crc_32, 0x54809df5);
+        EXPECT_EQ(frontHeader.compressed_size, 0x0164);
+        EXPECT_EQ(frontHeader.uncompressed_size, 0x0202);
+        EXPECT_EQ(frontHeader.file_name_length, 0x00);
+        EXPECT_EQ(frontHeader.extra_field_length, 0x00);
+        EXPECT_EQ(frontHeader.file_comment_length, 0x00);
+        EXPECT_EQ(frontHeader.disk_number_start, 0x00);
+        EXPECT_EQ(frontHeader.internal_file_attributes, 0x00);
+        EXPECT_EQ(frontHeader.external_file_attributes, 0x81a40000);
+        EXPECT_EQ(frontHeader.relative_offset_of_local_header, 0x00);
+        EXPECT_TRUE(frontHeader.file_name.empty());
+        EXPECT_TRUE(frontHeader.extra_field.empty());
+        EXPECT_TRUE(frontHeader.file_comment.empty());
+    }
+}
+
+TEST(ZipTests, read_two_central_directory_header_mixed_content) {
+    auto data = make_bytes(
+        0x50, 0x4B, 0x01, 0x02,
+        0x14, 0x03,
+        0x14, 0x00,
+        0x08, 0x00,
+        0x08, 0x00,
+        0x1A, 0x58,
+        0x7F, 0x5A,
+        0xF5, 0x9D, 0x80, 0x54,
+        0x64, 0x01, 0x00, 0x00,
+        0x02, 0x02, 0x00, 0x00,
+        0x05, 0x00,
+        0x05, 0x00,
+        0x05, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00, 0xA4, 0x81,
+        0x00, 0x00, 0x00, 0x00,
+        'h', 'e', 'l', 'l', 'o',
+        0x01, 0x02, 0x03, 0x04, 0x05,
+        't', 'h', 'e', 'r', 'e',
+        0x50, 0x4B, 0x01, 0x02,
+        0x14, 0x03,
+        0x14, 0x00,
+        0x08, 0x00,
+        0x08, 0x00,
+        0x1A, 0x58,
+        0x7F, 0x5A,
+        0xF5, 0x9D, 0x80, 0x54,
+        0x64, 0x01, 0x00, 0x00,
+        0x02, 0x02, 0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00,
+        0x00, 0x00, 0xA4, 0x81,
+        0x00, 0x00, 0x00, 0x00
+    );
+
+    auto result = zip::read_central_directory_headers(std::span{data});
+    ASSERT_FALSE(result.empty());
+
+    auto frontHeader = result.front();
+    EXPECT_EQ(frontHeader.signature, 0x02014b50);
+    EXPECT_EQ(frontHeader.version_made_by, 0x0314);
+    EXPECT_EQ(frontHeader.version_needed, 0x14);
+    EXPECT_EQ(frontHeader.general_purpose_bit_flag, 0x08);
+    EXPECT_EQ(frontHeader.compression_method, 0x08);
+    EXPECT_EQ(frontHeader.last_mod_file_time, 0x581a);
+    EXPECT_EQ(frontHeader.last_mod_file_date, 0x5a7f);
+    EXPECT_EQ(frontHeader.crc_32, 0x54809df5);
+    EXPECT_EQ(frontHeader.compressed_size, 0x0164);
+    EXPECT_EQ(frontHeader.uncompressed_size, 0x0202);
+    EXPECT_EQ(frontHeader.file_name_length, 0x05);
+    EXPECT_EQ(frontHeader.extra_field_length, 0x05);
+    EXPECT_EQ(frontHeader.file_comment_length, 0x05);
+    EXPECT_EQ(frontHeader.disk_number_start, 0x00);
+    EXPECT_EQ(frontHeader.internal_file_attributes, 0x00);
+    EXPECT_EQ(frontHeader.external_file_attributes, 0x81a40000);
+    EXPECT_EQ(frontHeader.relative_offset_of_local_header, 0x00);
+    EXPECT_EQ(frontHeader.file_name, "hello");
+    EXPECT_TRUE(std::equal(
+        frontHeader.extra_field.begin(),
+        frontHeader.extra_field.end(),
+        make_bytes(0x01, 0x02, 0x03, 0x04, 0x05).begin()));
+    EXPECT_EQ(frontHeader.file_comment, "there");
+
+    frontHeader = result.back();
+    EXPECT_EQ(frontHeader.signature, 0x02014b50);
+    EXPECT_EQ(frontHeader.version_made_by, 0x0314);
+    EXPECT_EQ(frontHeader.version_needed, 0x14);
+    EXPECT_EQ(frontHeader.general_purpose_bit_flag, 0x08);
+    EXPECT_EQ(frontHeader.compression_method, 0x08);
+    EXPECT_EQ(frontHeader.last_mod_file_time, 0x581a);
+    EXPECT_EQ(frontHeader.last_mod_file_date, 0x5a7f);
+    EXPECT_EQ(frontHeader.crc_32, 0x54809df5);
+    EXPECT_EQ(frontHeader.compressed_size, 0x0164);
+    EXPECT_EQ(frontHeader.uncompressed_size, 0x0202);
+    EXPECT_EQ(frontHeader.file_name_length, 0x00);
+    EXPECT_EQ(frontHeader.extra_field_length, 0x00);
+    EXPECT_EQ(frontHeader.file_comment_length, 0x00);
+    EXPECT_EQ(frontHeader.disk_number_start, 0x00);
+    EXPECT_EQ(frontHeader.internal_file_attributes, 0x00);
+    EXPECT_EQ(frontHeader.external_file_attributes, 0x81a40000);
+    EXPECT_EQ(frontHeader.relative_offset_of_local_header, 0x00);
+    EXPECT_TRUE(frontHeader.file_name.empty());
+    EXPECT_TRUE(frontHeader.extra_field.empty());
+    EXPECT_TRUE(frontHeader.file_comment.empty());
 }
