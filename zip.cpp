@@ -116,3 +116,36 @@ zip::read_central_directory_headers(std::span<std::byte> data) {
 
     return headers;
 }
+
+std::expected<zip::LocalFileHeader, std::string>
+zip::read_local_header(std::span<std::byte> data) {
+    if (data.size() < 30) {
+        return std::unexpected("Not enough bytes for a Local File Header.");
+    }
+
+    LocalFileHeader header;
+
+    read_adv(header.signature, data);
+    if (header.signature != 0x04034b50) {
+        return std::unexpected("Local file header signature not matched.");
+    }
+
+    read_adv(header.extraction_version, data);
+    read_adv(header.gp_bit_flag, data);
+    read_adv(header.compression_method, data);
+    read_adv(header.last_mod_file_time, data);
+    read_adv(header.last_mod_file_date, data);
+    read_adv(header.crc_32, data);
+    read_adv(header.compressed_size, data);
+    read_adv(header.uncompressed_size, data);
+    read_adv(header.file_name_length, data);
+    read_adv(header.extra_field_length, data);
+
+    header.file_name.insert(0, reinterpret_cast<char*>(&data[0]), header.file_name_length);
+    data = data.subspan(header.file_name_length);
+
+    header.extra_field.insert(header.extra_field.begin(), data.begin(), data.begin() + header.extra_field_length);
+    data = data.subspan(header.extra_field_length);
+
+    return header;
+}

@@ -464,3 +464,64 @@ TEST(ZipTests, read_two_central_directory_header_mixed_content) {
     EXPECT_TRUE(frontHeader.extra_field.empty());
     EXPECT_TRUE(frontHeader.file_comment.empty());
 }
+
+TEST(ZipTests, read_local_file_header_no_content) {
+    auto data = make_bytes();
+    auto result = zip::read_local_header(data);
+    EXPECT_EQ(result.error(), "Not enough bytes for a Local File Header.");
+}
+
+TEST(ZipTests, read_local_file_header_incorrect_signature) {
+    auto data = make_bytes(
+        0x10, 0x20, 0x30, 0x40,
+        0x14, 0x00,
+        0x08, 0x00,
+        0x08, 0x00,
+        0x1A, 0x58,
+        0x7F, 0x5A,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x02, 0x02, 0x00, 0x00,
+        0x05, 0x00,
+        0x00, 0x00,
+        'h', 'e', 'l', 'l', 'o'
+    );
+
+    auto result = zip::read_local_header(data);
+    EXPECT_EQ(result.error(), "Local file header signature not matched.");
+}
+
+TEST(ZipTests, read_local_file_header_content) {
+    auto data = make_bytes(
+        0x50, 0x4B, 0x03, 0x04,
+        0x14, 0x00,
+        0x08, 0x00,
+        0x08, 0x00,
+        0x1A, 0x58,
+        0x7F, 0x5A,
+        0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00,
+        0x02, 0x02, 0x00, 0x00,
+        0x05, 0x00,
+        0x00, 0x00,
+        'h', 'e', 'l', 'l', 'o'
+    );
+
+    auto result = zip::read_local_header(data);
+    EXPECT_TRUE(result.has_value());
+
+    auto local_header = result.value();
+    EXPECT_EQ(local_header.signature, 0x04034b50);
+    EXPECT_EQ(local_header.extraction_version, 0x14);
+    EXPECT_EQ(local_header.gp_bit_flag, 0x08);
+    EXPECT_EQ(local_header.compression_method, 0x08);
+    EXPECT_EQ(local_header.last_mod_file_time, 0x581a);
+    EXPECT_EQ(local_header.last_mod_file_date, 0x5a7f);
+    EXPECT_EQ(local_header.crc_32, 0x00);
+    EXPECT_EQ(local_header.compressed_size, 0x00);
+    EXPECT_EQ(local_header.uncompressed_size, 0x0202);
+    EXPECT_EQ(local_header.file_name_length, 0x05);
+    EXPECT_EQ(local_header.extra_field_length, 0x00);
+    EXPECT_EQ(local_header.file_name, "hello");
+    EXPECT_TRUE(local_header.extra_field.empty());
+}

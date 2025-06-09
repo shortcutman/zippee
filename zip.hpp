@@ -61,4 +61,23 @@ struct CentralDirectoryHeader {
 
 std::vector<CentralDirectoryHeader> read_central_directory_headers(std::span<std::byte> data);
 
+struct LocalFileHeader {
+    uint32_t signature;
+    uint16_t extraction_version;
+    uint16_t gp_bit_flag;
+    uint16_t compression_method;
+    uint16_t last_mod_file_time;
+    uint16_t last_mod_file_date;
+    uint32_t crc_32;
+    uint32_t compressed_size;
+    uint32_t uncompressed_size;
+    uint16_t file_name_length;
+    uint16_t extra_field_length;
+
+    std::string file_name;
+    std::vector<std::byte> extra_field;
+};
+
+std::expected<LocalFileHeader, std::string> read_local_header(std::span<std::byte> data);
+
 }
