@@ -14,7 +14,7 @@ namespace {
 }
 
 std::ostream& zip::operator<<(std::ostream& os, const EOCD& s) {
-    os << "EOCD: Signature: 0x" << std::hex << s.signature;
+    os << "EOCD:";
 
     os << " Size of central directory: " << std::dec << s.size_central_directory;
 
@@ -64,7 +64,7 @@ std::expected<zip::EOCD, std::string> zip::search_for_eocd(std::span<std::byte> 
 }
 
 std::ostream& zip::operator<<(std::ostream& os, const CentralDirectoryHeader& h) {
-    os << "CDH: Signature: 0x" << std::hex << h.signature;
+    os << "CDH:";
 
     if (h.file_name.empty()) {
         os << " No filename";
@@ -75,7 +75,8 @@ std::ostream& zip::operator<<(std::ostream& os, const CentralDirectoryHeader& h)
     return os;
 }
 
-std::vector<zip::CentralDirectoryHeader> zip::read_central_directory_headers(std::span<std::byte> data) {
+std::vector<zip::CentralDirectoryHeader>
+zip::read_central_directory_headers(std::span<std::byte> data) {
     std::vector<zip::CentralDirectoryHeader> headers;
 
     while (!data.empty()) {

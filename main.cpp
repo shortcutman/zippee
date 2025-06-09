@@ -22,13 +22,10 @@ int main(int argc, char** argv) {
     }
 
     auto size = file.tellg();
-    std::cout << "size: " << size << std::endl;
     
     std::vector<std::byte> data;
     data.reserve(size);
     file.seekg(0);
-
-    std::cout << "v size: " << data.size() << std::endl;
 
     for (size_t i; i < size; i++) {
         auto getbyte = file.get();
@@ -38,8 +35,6 @@ int main(int argc, char** argv) {
 
         data.push_back(std::byte{static_cast<uint8_t>(getbyte)});
     }
-
-    std::cout << "v size: " << data.size() << std::endl;
 
     auto result = zip::search_for_eocd(std::span{data.begin(), data.end()});
     std::cout << result.value() << std::endl;
