@@ -65,3 +65,43 @@ TEST(Deflate, get_btype_reserved_error_zero_offset) {
     auto data = make_bytes(0x06);
     EXPECT_EQ(deflate::get_btype(data, 0), deflate::BType::ReservedError);
 }
+
+TEST(Deflate, get_btype_nocompression_3bit_offset) {
+    auto data = make_bytes(0x00);
+    EXPECT_EQ(deflate::get_btype(data, 3), deflate::BType::NoCompression);
+}
+
+TEST(Deflate, get_btype_fixed_huffman_3bit_offset) {
+    auto data = make_bytes(0x10);
+    EXPECT_EQ(deflate::get_btype(data, 3), deflate::BType::FixedHuffmanCodes);
+}
+
+TEST(Deflate, get_btype_dynamic_huffman_3bit_offset) {
+    auto data = make_bytes(0x20);
+    EXPECT_EQ(deflate::get_btype(data, 3), deflate::BType::DynamicHuffmanCodes);
+}
+
+TEST(Deflate, get_btype_reserved_error_3bit_offset) {
+    auto data = make_bytes(0x30);
+    EXPECT_EQ(deflate::get_btype(data, 3), deflate::BType::ReservedError);
+}
+
+TEST(Deflate, get_btype_nocompression_7bit_offset) {
+    auto data = make_bytes(0x00, 0x00);
+    EXPECT_EQ(deflate::get_btype(data, 7), deflate::BType::NoCompression);
+}
+
+TEST(Deflate, get_btype_fixed_huffman_7bit_offset) {
+    auto data = make_bytes(0x00, 0x01);
+    EXPECT_EQ(deflate::get_btype(data, 7), deflate::BType::FixedHuffmanCodes);
+}
+
+TEST(Deflate, get_btype_dynamic_huffman_7bit_offset) {
+    auto data = make_bytes(0x00, 0x02);
+    EXPECT_EQ(deflate::get_btype(data, 7), deflate::BType::DynamicHuffmanCodes);
+}
+
+TEST(Deflate, get_btype_reserved_error_7bit_offset) {
+    auto data = make_bytes(0x00, 0x03);
+    EXPECT_EQ(deflate::get_btype(data, 7), deflate::BType::ReservedError);
+}
