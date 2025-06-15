@@ -106,14 +106,31 @@ TEST(Deflate, get_btype_reserved_error_7bit_offset) {
     EXPECT_EQ(deflate::get_btype(data, 7), deflate::BType::ReservedError);
 }
 
-TEST(Deflate, block) {
+TEST(Deflate, dynamic_header_code_lengths1) {
     auto data = make_bytes(0x6d, 0x8e, 0xb9, 0x72, 0x83, 0x30, 0x10, 0x40, 0xfb);
-    auto header = deflate::parse_dynamic_header(data, 3);
+    auto code_lengths = deflate::dynamic_header_code_lengths(data, 3);
 
-    EXPECT_EQ(header.hlit, 270);
-    EXPECT_EQ(header.hdist, 15);
-    EXPECT_EQ(header.hclen, 12);
-    EXPECT_EQ(header.code_length_codes, (std::array<size_t, 19>({
+    EXPECT_EQ(code_lengths, std::vector<size_t>({
         4, 0, 5, 0, 4, 3, 2, 3, 3, 0, 0, 0, 0, 0, 0, 0, 4, 3, 5
-    })));
+    }));
+}
+
+TEST(Deflate, bitlengths_to_huffman_3_2_2) {
+    using namespace deflate;
+
+    std::vector<size_t> bitlengths = {3, 3, 3, 3, 3, 2, 4, 4};
+    auto huffman_table = bitlengths_to_huffman(bitlengths);
+
+    auto result = std::map<size_t, size_t>({
+        {0b010, 0},
+        {0b011, 1},
+        {0b100, 2},
+        {0b101, 3},
+        {0b110, 4},
+        {0b00, 5},
+        {0b1110, 6},
+        {0b1111, 7}
+    });
+
+    EXPECT_EQ(huffman_table, result);
 }

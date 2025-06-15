@@ -8,6 +8,7 @@
 #include <cstddef>
 #include <span>
 #include <vector>
+#include <map>
 
 namespace deflate {
 
@@ -27,10 +28,11 @@ struct DynamicHeader {
     size_t hlit = 0;
     size_t hdist = 0;
     size_t hclen = 0;
-
     std::array<size_t, 19> code_length_codes{};
+    std::map<size_t, size_t> coodes;
 };
 
-DynamicHeader parse_dynamic_header(std::span<std::byte> data, size_t bit_offset);
+std::vector<size_t> dynamic_header_code_lengths(std::span<std::byte> data, size_t bit_offset);
+std::map<size_t, size_t> bitlengths_to_huffman(const std::vector<size_t>& bitlengths);
 
 }

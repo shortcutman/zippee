@@ -60,10 +60,7 @@ std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
 
         case BType::DynamicHuffmanCodes:
         {
-            auto header = parse_dynamic_header(data, 3);
-            // for (size_t n = 0; n <= 19; n++) {
-            //     size_t len = 
-            // }
+            auto code_length_bytes = dynamic_header_code_lengths(data, 3);
         }
         break;
 
@@ -95,45 +92,58 @@ deflate::BType deflate::get_btype(std::span<std::byte> data, uint8_t bit_offset)
     return BType(std::to_underlying<std::byte>(flag_byte));
 }
 
-deflate::DynamicHeader deflate::parse_dynamic_header(std::span<std::byte> data, size_t bit_offset) {
-    DynamicHeader header;
-
-    std::array<size_t, 19> code_length_idx_to_alphabet = {
+std::vector<size_t> deflate::dynamic_header_code_lengths(std::span<std::byte> data, size_t bit_offset) {
+    const std::array<size_t, 19> code_length_idx_to_alphabet = {
         16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
     };
 
-    header.hlit = std::to_integer<size_t>(get_offset_byte(data, bit_offset) & std::byte{0x1f}) + 257;
-    header.hdist = std::to_integer<size_t>(get_offset_byte(data, bit_offset + 5) & std::byte{0x1f}) + 1;
-    header.hclen = std::to_integer<size_t>(get_offset_byte(data, bit_offset + 10) & std::byte{0x0f});
+    uint8_t hlit = std::to_integer<uint8_t>(get_offset_byte(data, bit_offset) & std::byte{0x1f}) + 257;
+    uint8_t hdist = std::to_integer<uint8_t>(get_offset_byte(data, bit_offset + 5) & std::byte{0x1f}) + 1;
+    uint8_t hclen = std::to_integer<uint8_t>(get_offset_byte(data, bit_offset + 10) & std::byte{0x0f});
 
-    size_t hclen_qty = header.hclen + 4;
-    auto code_length_codes = get_offset_bytes(data, bit_offset + 14, bits_to_qty_bytes(hclen_qty * 3));
-    // std::println("Code length codes bytes: {}", code_length_codes.size());
+    size_t hclen_qty = hclen + 4;
+    auto length_bytes = get_offset_bytes(data, bit_offset + 14, bits_to_qty_bytes(hclen_qty * 3));
+    std::vector<size_t> code_lengths(19, 0);
 
     for (size_t i = 0; i < hclen_qty; i++) {
-        size_t val = std::to_integer<size_t>(get_offset_byte(code_length_codes, i * 3) & std::byte{0x07});
-        header.code_length_codes[code_length_idx_to_alphabet[i]] = val;
+        size_t val = std::to_integer<size_t>(get_offset_byte(length_bytes, i * 3) & std::byte{0x07});
+        code_lengths[code_length_idx_to_alphabet[i]] = val;
     }
 
-    // std::array<size_t, 19> bl_count{};
+    return code_lengths;
+}
 
-    // for (size_t i = 0; i < header.code_length_codes.size(); i++) {
-    //     std::println("Code length: {}, length: {}", i, header.code_length_codes[i]);
-    //     bl_count[i]++;
-    // }
+std::map<size_t, size_t> deflate::bitlengths_to_huffman(const std::vector<size_t>& bitlengths) {
+    std::array<size_t, 19> bl_count{};
+    size_t max_bits = 0;
+    size_t max_codes = 0;
+    //count the number of codes for each code length
+    for (size_t i = 0; i < bitlengths.size(); i++) {
+        if (bitlengths[i] == 0) continue;
 
-    // size_t code = 0;
-    // std::array<size_t, 19> next_code{};
+        bl_count[bitlengths[i]]++;
+        max_bits = std::max(max_bits, bitlengths[i]);
+        max_codes++;
+    }
 
-    // for (std::size_t val : bl_count) {
-    //     std::cout << val << " ";  // Should print: 0 0 0 ... (19 times)
-    // }
-    // std::cout << std::endl;
+    //find the numerical value of the smallest code for each code length
+    size_t code = 0;
+    std::array<size_t, 19> next_code{};
+    for (size_t bits = 1; bits <= max_bits; bits++) {
+        code = (code + bl_count[bits - 1]) << 1;
+        next_code[bits] = code;
+    }
 
-    // for (size_t bits = 1; bits <= 19; bits++) {
-    //     code = (code + bl_count[bits - 1]) << 1;
-    //     next_code[bits] = code;
-    // }
+    //assign numerical values to all codes
+    std::map<size_t, size_t> huffman_to_symbol;
+    for (size_t n = 0; n < bitlengths.size(); n++) {
+        auto bit_length = bitlengths[n];
+        if (bit_length != 0) {
+            // huffman_to_symbol[n] = next_code[bit_length];
+            huffman_to_symbol[next_code[bit_length]] = n;
+            next_code[bit_length]++;
+        }
+    }
 
-    return header;
+    return huffman_to_symbol;
 }
