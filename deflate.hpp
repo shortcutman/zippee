@@ -23,4 +23,14 @@ std::vector<std::byte> decompress(std::span<std::byte> data);
 bool is_bfinal(std::span<std::byte> data, uint8_t bit_offset);
 BType get_btype(std::span<std::byte> data, uint8_t bit_offset);
 
+struct DynamicHeader {
+    size_t hlit = 0;
+    size_t hdist = 0;
+    size_t hclen = 0;
+
+    std::array<size_t, 19> code_length_codes{};
+};
+
+DynamicHeader parse_dynamic_header(std::span<std::byte> data, size_t bit_offset);
+
 }

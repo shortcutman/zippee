@@ -105,3 +105,15 @@ TEST(Deflate, get_btype_reserved_error_7bit_offset) {
     auto data = make_bytes(0x00, 0x03);
     EXPECT_EQ(deflate::get_btype(data, 7), deflate::BType::ReservedError);
 }
+
+TEST(Deflate, block) {
+    auto data = make_bytes(0x6d, 0x8e, 0xb9, 0x72, 0x83, 0x30, 0x10, 0x40, 0xfb);
+    auto header = deflate::parse_dynamic_header(data, 3);
+
+    EXPECT_EQ(header.hlit, 270);
+    EXPECT_EQ(header.hdist, 15);
+    EXPECT_EQ(header.hclen, 12);
+    EXPECT_EQ(header.code_length_codes, (std::array<size_t, 19>({
+        4, 0, 5, 0, 4, 3, 2, 3, 3, 0, 0, 0, 0, 0, 0, 0, 4, 3, 5
+    })));
+}
