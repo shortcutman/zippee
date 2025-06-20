@@ -5,6 +5,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <span>
 
@@ -17,6 +18,10 @@ namespace zippee {
     public:
         bitspan(std::span<std::byte> data);
         bitspan(std::span<std::byte> data, size_t bit_offset);
+        bitspan(bitspan& data);
+
+        template<std::size_t N>
+        bitspan(std::array<std::byte, N>& arr) : bitspan(std::span{arr}) {}
 
         size_t bits_read() const;
 

@@ -17,6 +17,11 @@ zippee::bitspan::bitspan(std::span<std::byte> data, size_t bit_offset)
     , _bit_offset(bit_offset) {
 }
 
+zippee::bitspan::bitspan(bitspan& data) 
+    : _data(data._data) 
+    , _bit_offset(data._bit_offset) {
+}
+
 size_t zippee::bitspan::bits_read() const {
     return _bit_offset;
 }
