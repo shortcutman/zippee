@@ -117,6 +117,10 @@ zip::read_central_directory_headers(std::span<std::byte> data) {
     return headers;
 }
 
+size_t zip::LocalFileHeader::header_size() const {
+    return 30 + file_name.size() + extra_field.size();
+}
+
 std::expected<zip::LocalFileHeader, std::string>
 zip::read_local_header(std::span<std::byte> data) {
     if (data.size() < 30) {

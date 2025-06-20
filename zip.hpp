@@ -76,6 +76,8 @@ struct LocalFileHeader {
 
     std::string file_name;
     std::vector<std::byte> extra_field;
+
+    size_t header_size() const;
 };
 
 std::expected<LocalFileHeader, std::string> read_local_header(std::span<std::byte> data);
