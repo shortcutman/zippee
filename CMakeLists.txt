@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_COMPILE_WARNING_AS_ERROR True)
 
 add_library(zip
+    bitspan.cpp
     deflate.cpp
     zip.cpp
 )
@@ -32,6 +33,7 @@ enable_testing()
 
 add_executable(
     zip_tests
+    bitspan.tests.cpp
     deflate.tests.cpp
     zip.tests.cpp
 )
