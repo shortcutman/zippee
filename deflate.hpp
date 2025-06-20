@@ -34,7 +34,7 @@ struct DynamicHeader {
     std::map<size_t, size_t> coodes;
 };
 
-std::vector<size_t> dynamic_header_code_lengths(std::span<std::byte> data, size_t bit_offset);
+std::vector<size_t> dynamic_header_code_lengths(zippee::bitspan data);
 std::map<size_t, size_t> bitlengths_to_huffman(const std::vector<size_t>& bitlengths);
 
 }

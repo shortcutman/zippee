@@ -85,21 +85,20 @@ deflate::BType deflate::get_btype(zippee::bitspan data) {
     return BType(std::to_underlying<std::byte>(std::byte{static_cast<uint8_t>(type_bits)}));
 }
 
-std::vector<size_t> deflate::dynamic_header_code_lengths(std::span<std::byte> data, size_t bit_offset) {
+std::vector<size_t> deflate::dynamic_header_code_lengths(zippee::bitspan data) {
     const std::array<size_t, 19> code_length_idx_to_alphabet = {
         16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
     };
 
-    uint8_t hlit = std::to_integer<uint8_t>(get_offset_byte(data, bit_offset) & std::byte{0x1f}) + 257;
-    uint8_t hdist = std::to_integer<uint8_t>(get_offset_byte(data, bit_offset + 5) & std::byte{0x1f}) + 1;
-    uint8_t hclen = std::to_integer<uint8_t>(get_offset_byte(data, bit_offset + 10) & std::byte{0x0f});
+    uint8_t hlit = data.read_bits(5) + 257;
+    uint8_t hdist = data.read_bits(5) + 1;
+    uint8_t hclen = data.read_bits(4);
 
     size_t hclen_qty = hclen + 4;
-    auto length_bytes = get_offset_bytes(data, bit_offset + 14, bits_to_qty_bytes(hclen_qty * 3));
     std::vector<size_t> code_lengths(19, 0);
 
     for (size_t i = 0; i < hclen_qty; i++) {
-        size_t val = std::to_integer<size_t>(get_offset_byte(length_bytes, i * 3) & std::byte{0x07});
+        size_t val = data.read_bits(3);
         code_lengths[code_length_idx_to_alphabet[i]] = val;
     }
 

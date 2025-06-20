@@ -132,7 +132,9 @@ TEST(Deflate, get_btype_reserved_error_7bit_offset) {
 
 TEST(Deflate, dynamic_header_code_lengths1) {
     auto data = make_bytes(0x6d, 0x8e, 0xb9, 0x72, 0x83, 0x30, 0x10, 0x40, 0xfb);
-    auto code_lengths = deflate::dynamic_header_code_lengths(data, 3);
+    zippee::bitspan bits(data);
+    bits.read_bits(3);
+    auto code_lengths = deflate::dynamic_header_code_lengths(bits);
 
     EXPECT_EQ(code_lengths, std::vector<size_t>({
         4, 0, 5, 0, 4, 3, 2, 3, 3, 0, 0, 0, 0, 0, 0, 0, 4, 3, 5
