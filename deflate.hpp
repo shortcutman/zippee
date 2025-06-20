@@ -5,6 +5,8 @@
 
 #pragma once
 
+#include "bitspan.hpp"
+
 #include <cstddef>
 #include <span>
 #include <vector>
@@ -21,8 +23,8 @@ enum class BType : std::underlying_type_t<std::byte> {
 
 std::vector<std::byte> decompress(std::span<std::byte> data);
 
-bool is_bfinal(std::span<std::byte> data, uint8_t bit_offset);
-BType get_btype(std::span<std::byte> data, uint8_t bit_offset);
+bool is_bfinal(zippee::bitspan data);
+BType get_btype(zippee::bitspan data);
 
 struct DynamicHeader {
     size_t hlit = 0;

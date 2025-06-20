@@ -43,9 +43,10 @@ namespace {
 
 std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
     std::vector<std::byte> decompressed;
+    zippee::bitspan bits(data);
     
-    bool isLast = is_bfinal(data, 0);
-    switch (get_btype(data, 0)) {
+    bool isLast = is_bfinal(bits);
+    switch (get_btype(bits)) {
         case BType::NoCompression:
         {
             throw std::runtime_error("No compression unimplemented.");
@@ -74,22 +75,14 @@ std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
     return decompressed;
 }
 
-bool deflate::is_bfinal(std::span<std::byte> data, uint8_t bit_offset) {
-    auto flag_byte = get_offset_byte(data, bit_offset);
-
-    if ((flag_byte & std::byte{0x01}) == std::byte{0x01}) {
-        return true;
-    }
-
-    return false;
+bool deflate::is_bfinal(zippee::bitspan data) {
+    auto flag_bit = data.read_bits(1);
+    return flag_bit;
 }
 
-deflate::BType deflate::get_btype(std::span<std::byte> data, uint8_t bit_offset) {
-    auto flag_byte = get_offset_byte(data, bit_offset);
-    flag_byte &= std::byte{0x06};
-    
-    flag_byte >>= 1;
-    return BType(std::to_underlying<std::byte>(flag_byte));
+deflate::BType deflate::get_btype(zippee::bitspan data) {
+    auto type_bits = data.read_bits(2);
+    return BType(std::to_underlying<std::byte>(std::byte{static_cast<uint8_t>(type_bits)}));
 }
 
 std::vector<size_t> deflate::dynamic_header_code_lengths(std::span<std::byte> data, size_t bit_offset) {
