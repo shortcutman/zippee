@@ -129,14 +129,14 @@ std::vector<deflate::HuffmanCode> deflate::reverse_codes(const std::vector<Huffm
             original.code >>= 1;
             original.code_length--;
         }
-        
+
         reversed_codes.push_back(reversed);
     }
 
     return reversed_codes;
 }
 
-size_t deflate::get_code(const std::vector<HuffmanCode>& codes, zippee::bitspan& data) {
+size_t deflate::get_symbol_for_code(const std::vector<HuffmanCode>& codes, zippee::bitspan& data) {
     assert(std::is_sorted(codes.begin(), codes.end()));
 
     const size_t min_bits = codes.front().code_length;

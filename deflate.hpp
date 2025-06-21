@@ -48,6 +48,6 @@ struct HuffmanCode {
 };
 std::vector<HuffmanCode> bitlengths_to_huffman(const std::vector<size_t>& bitlengths);
 std::vector<HuffmanCode> reverse_codes(const std::vector<HuffmanCode>& codes);
-size_t get_code(const std::vector<HuffmanCode>& codes, zippee::bitspan& data);
+size_t get_symbol_for_code(const std::vector<HuffmanCode>& codes, zippee::bitspan& data);
 
 }

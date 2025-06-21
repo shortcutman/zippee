@@ -228,13 +228,13 @@ TEST(Deflate, get_code_symmetrical) {
 
     auto data = make_bytes(0xa8, 0x0f);
     zippee::bitspan bits(data);
-    auto symbol = deflate::get_code(codes, bits);
+    auto symbol = deflate::get_symbol_for_code(codes, bits);
     EXPECT_EQ(symbol, 5);
-    symbol = deflate::get_code(codes, bits);
+    symbol = deflate::get_symbol_for_code(codes, bits);
     EXPECT_EQ(symbol, 0);
-    symbol = deflate::get_code(codes, bits);
+    symbol = deflate::get_symbol_for_code(codes, bits);
     EXPECT_EQ(symbol, 3);
-    symbol = deflate::get_code(codes, bits);
+    symbol = deflate::get_symbol_for_code(codes, bits);
     EXPECT_EQ(symbol, 7);
 }
 
@@ -253,12 +253,12 @@ TEST(Deflate, get_code_asymmetrical) {
 
     auto data = make_bytes(0xce, 0x0e);
     zippee::bitspan bits(data);
-    auto symbol = deflate::get_code(codes, bits);
+    auto symbol = deflate::get_symbol_for_code(codes, bits);
     EXPECT_EQ(symbol, 1);
-    symbol = deflate::get_code(codes, bits);
+    symbol = deflate::get_symbol_for_code(codes, bits);
     EXPECT_EQ(symbol, 2);
-    symbol = deflate::get_code(codes, bits);
+    symbol = deflate::get_symbol_for_code(codes, bits);
     EXPECT_EQ(symbol, 4);
-    symbol = deflate::get_code(codes, bits);
+    symbol = deflate::get_symbol_for_code(codes, bits);
     EXPECT_EQ(symbol, 6);
 }
