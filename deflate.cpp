@@ -107,7 +107,7 @@ std::vector<size_t> deflate::dynamic_header_code_lengths(zippee::bitspan data) {
 
 std::vector<deflate::HuffmanCode>
 deflate::bitlengths_to_huffman(const std::vector<size_t>& bitlengths) {
-    std::array<size_t, 19> bl_count{};
+    std::vector<size_t> bl_count(bitlengths.size(), 0);
     size_t max_bits = 0;
     size_t max_codes = 0;
     //count the number of codes for each code length
@@ -121,7 +121,7 @@ deflate::bitlengths_to_huffman(const std::vector<size_t>& bitlengths) {
 
     //find the numerical value of the smallest code for each code length
     size_t code = 0;
-    std::array<size_t, 19> next_code{};
+    std::vector<size_t> next_code(bitlengths.size(), 0);
     for (size_t bits = 1; bits <= max_bits; bits++) {
         code = (code + bl_count[bits - 1]) << 1;
         next_code[bits] = code;
