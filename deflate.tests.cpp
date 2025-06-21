@@ -148,12 +148,12 @@ TEST(Deflate, bitlengths_to_huffman_3_2_2) {
     auto huffman_table = bitlengths_to_huffman(bitlengths);
 
     auto result = std::vector<HuffmanCode>({
+        {0b00, 2, 5},
         {0b010, 3, 0},
         {0b011, 3, 1},
         {0b100, 3, 2},
         {0b101, 3, 3},
         {0b110, 3, 4},
-        {0b00, 2, 5},
         {0b1110, 4, 6},
         {0b1111, 4, 7}
     });

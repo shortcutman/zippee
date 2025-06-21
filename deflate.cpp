@@ -5,41 +5,9 @@
 
 #include "deflate.hpp"
 
-#include <utility>
+#include <algorithm>
 #include <print>
-
-namespace {
-    std::byte get_offset_byte(std::span<std::byte> data, uint8_t bit_offset) {
-        size_t byte_offset = 0;
-        if (bit_offset > 7) {
-            byte_offset = bit_offset / 8;
-            bit_offset %= 8;
-        }
-
-        std::byte b = data[byte_offset] >> bit_offset;
-
-        if (data.size() > (byte_offset + 1)) {
-            b |= data[byte_offset + 1] << (8 - bit_offset);
-        }
-
-        return b;
-    }
-
-    std::vector<std::byte> get_offset_bytes(std::span<std::byte> data, uint8_t bit_offset, size_t bytes) {
-        std::vector<std::byte> read_bytes;
-
-        while (read_bytes.size() < bytes) {
-            read_bytes.push_back(get_offset_byte(data, bit_offset + read_bytes.size() * 8));
-        }
-
-        return read_bytes;
-    }
-
-    
-    size_t bits_to_qty_bytes(size_t bits) {
-        return (bits + (bits % 8)) / 8;
-    }
-}
+#include <utility>
 
 std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
     std::vector<std::byte> decompressed;
@@ -140,6 +108,9 @@ deflate::bitlengths_to_huffman(const std::vector<size_t>& bitlengths) {
             next_code[bit_length]++;
         }
     }
+
+    std::sort(huffman_to_symbol.begin(), huffman_to_symbol.end(),
+    [] (const HuffmanCode& a, const HuffmanCode& b) { return a.code_length < b.code_length; });
 
     return huffman_to_symbol;
 }
