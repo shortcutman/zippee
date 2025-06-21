@@ -160,3 +160,81 @@ TEST(Deflate, bitlengths_to_huffman_3_2_2) {
 
     EXPECT_EQ(huffman_table, result);
 }
+
+TEST(Deflate, reverse_codes) {
+    auto codes = std::vector<deflate::HuffmanCode>({
+        {0b00, 2, 5},
+        {0b010, 3, 0},
+        {0b011, 3, 1},
+        {0b100, 3, 2},
+        {0b101, 3, 3},
+        {0b110, 3, 4},
+        {0b1110, 4, 6},
+        {0b1111, 4, 7}
+    });
+
+    codes = deflate::reverse_codes(codes);
+
+    auto reversed = std::vector<deflate::HuffmanCode>({
+        {0b00, 2, 5},
+        {0b010, 3, 0},
+        {0b110, 3, 1},
+        {0b001, 3, 2},
+        {0b101, 3, 3},
+        {0b011, 3, 4},
+        {0b0111, 4, 6},
+        {0b1111, 4, 7}
+    });
+
+    EXPECT_EQ(codes, reversed);
+}
+
+TEST(Deflate, get_code_symmetrical) {
+    auto codes = std::vector<deflate::HuffmanCode>({
+        {0b00, 2, 5},
+        {0b010, 3, 0},
+        {0b011, 3, 1},
+        {0b100, 3, 2},
+        {0b101, 3, 3},
+        {0b110, 3, 4},
+        {0b1110, 4, 6},
+        {0b1111, 4, 7}
+    });
+    codes = deflate::reverse_codes(codes);
+
+    auto data = make_bytes(0xa8, 0x0f);
+    zippee::bitspan bits(data);
+    auto symbol = deflate::get_code(codes, bits);
+    EXPECT_EQ(symbol, 5);
+    symbol = deflate::get_code(codes, bits);
+    EXPECT_EQ(symbol, 0);
+    symbol = deflate::get_code(codes, bits);
+    EXPECT_EQ(symbol, 3);
+    symbol = deflate::get_code(codes, bits);
+    EXPECT_EQ(symbol, 7);
+}
+
+TEST(Deflate, get_code_asymmetrical) {
+    auto codes = std::vector<deflate::HuffmanCode>({
+        {0b00, 2, 5},
+        {0b010, 3, 0},
+        {0b011, 3, 1},
+        {0b100, 3, 2},
+        {0b101, 3, 3},
+        {0b110, 3, 4},
+        {0b1110, 4, 6},
+        {0b1111, 4, 7}
+    });
+    codes = deflate::reverse_codes(codes);
+
+    auto data = make_bytes(0xce, 0x0e);
+    zippee::bitspan bits(data);
+    auto symbol = deflate::get_code(codes, bits);
+    EXPECT_EQ(symbol, 1);
+    symbol = deflate::get_code(codes, bits);
+    EXPECT_EQ(symbol, 2);
+    symbol = deflate::get_code(codes, bits);
+    EXPECT_EQ(symbol, 4);
+    symbol = deflate::get_code(codes, bits);
+    EXPECT_EQ(symbol, 6);
+}

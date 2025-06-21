@@ -42,8 +42,12 @@ struct HuffmanCode {
     size_t symbol;
 
     bool operator==(const HuffmanCode& a) const = default;
+    bool operator<(const HuffmanCode& b) const {
+        return this->code_length < b.code_length;
+    }
 };
 std::vector<HuffmanCode> bitlengths_to_huffman(const std::vector<size_t>& bitlengths);
-
+std::vector<HuffmanCode> reverse_codes(const std::vector<HuffmanCode>& codes);
+size_t get_code(const std::vector<HuffmanCode>& codes, zippee::bitspan& data);
 
 }

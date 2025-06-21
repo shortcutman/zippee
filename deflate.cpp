@@ -6,6 +6,7 @@
 #include "deflate.hpp"
 
 #include <algorithm>
+#include <cassert>
 #include <print>
 #include <utility>
 
@@ -109,8 +110,45 @@ deflate::bitlengths_to_huffman(const std::vector<size_t>& bitlengths) {
         }
     }
 
-    std::sort(huffman_to_symbol.begin(), huffman_to_symbol.end(),
-    [] (const HuffmanCode& a, const HuffmanCode& b) { return a.code_length < b.code_length; });
+    std::sort(huffman_to_symbol.begin(), huffman_to_symbol.end());
 
     return huffman_to_symbol;
+}
+
+std::vector<deflate::HuffmanCode> deflate::reverse_codes(const std::vector<HuffmanCode>& codes) {
+    std::vector<HuffmanCode> reversed_codes;
+
+    for (auto& item : codes) {
+        auto reversed = item;
+        auto original = item;
+        reversed.code = 0;
+
+        while (original.code_length > 0) {
+            reversed.code <<= 1;
+            reversed.code |= original.code & 0x1;
+            original.code >>= 1;
+            original.code_length--;
+        }
+        
+        reversed_codes.push_back(reversed);
+    }
+
+    return reversed_codes;
+}
+
+size_t deflate::get_code(const std::vector<HuffmanCode>& codes, zippee::bitspan& data) {
+    assert(std::is_sorted(codes.begin(), codes.end()));
+
+    const size_t min_bits = codes.front().code_length;
+    for (auto& code : codes) {
+        auto bits = data.peek_bits(code.code_length);
+        if (bits == code.code) {
+            data.read_bits(code.code_length);
+            return code.symbol;
+        }
+    }
+
+    throw std::runtime_error("Couldn't find a matching code.");
+
+    return 0;
 }
