@@ -18,12 +18,16 @@ std::array<std::byte, sizeof...(Ts)> make_bytes(Ts&&... args) noexcept {
 
 TEST(Deflate, is_bfinal_true_zero_offset) {
     auto data = make_bytes(0x01);
-    EXPECT_TRUE(deflate::is_bfinal(data));
+    zippee::bitspan bits(data);
+    EXPECT_TRUE(deflate::is_bfinal(bits));
+    EXPECT_EQ(bits.bits_read(), 1);
 }
 
 TEST(Deflate, is_bfinal_false_zero_offset) {
     auto data = make_bytes(0x00);
-    EXPECT_FALSE(deflate::is_bfinal(data));
+    zippee::bitspan bits(data);
+    EXPECT_FALSE(deflate::is_bfinal(bits));
+    EXPECT_EQ(bits.bits_read(), 1);
 }
 
 TEST(Deflate, is_bfinal_true_3bit_offset) {
@@ -31,6 +35,7 @@ TEST(Deflate, is_bfinal_true_3bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(3);
     EXPECT_TRUE(deflate::is_bfinal(bits));
+    EXPECT_EQ(bits.bits_read(), 4);
 }
 
 TEST(Deflate, is_bfinal_false_3bit_offset) {
@@ -38,6 +43,7 @@ TEST(Deflate, is_bfinal_false_3bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(3);
     EXPECT_FALSE(deflate::is_bfinal(bits));
+    EXPECT_EQ(bits.bits_read(), 4);
 }
 
 TEST(Deflate, is_bfinal_true_7bit_offset) {
@@ -45,6 +51,7 @@ TEST(Deflate, is_bfinal_true_7bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(7);
     EXPECT_TRUE(deflate::is_bfinal(bits));
+    EXPECT_EQ(bits.bits_read(), 8);
 }
 
 TEST(Deflate, is_bfinal_false_7bit_offset) {
@@ -52,26 +59,35 @@ TEST(Deflate, is_bfinal_false_7bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(7);
     EXPECT_FALSE(deflate::is_bfinal(bits));
+    EXPECT_EQ(bits.bits_read(), 8);
 }
 
 TEST(Deflate, get_btype_nocompression_zero_offset) {
     auto data = make_bytes(0x00);
-    EXPECT_EQ(deflate::get_btype(data), deflate::BType::NoCompression);
+    zippee::bitspan bits(data);
+    EXPECT_EQ(deflate::get_btype(bits), deflate::BType::NoCompression);
+    EXPECT_EQ(bits.bits_read(), 2);
 }
 
 TEST(Deflate, get_btype_fixed_huffman_zero_offset) {
     auto data = make_bytes(0x01);
-    EXPECT_EQ(deflate::get_btype(data), deflate::BType::FixedHuffmanCodes);
+    zippee::bitspan bits(data);
+    EXPECT_EQ(deflate::get_btype(bits), deflate::BType::FixedHuffmanCodes);
+    EXPECT_EQ(bits.bits_read(), 2);
 }
 
 TEST(Deflate, get_btype_dynamic_huffman_zero_offset) {
     auto data = make_bytes(0x02);
-    EXPECT_EQ(deflate::get_btype(data), deflate::BType::DynamicHuffmanCodes);
+    zippee::bitspan bits(data);
+    EXPECT_EQ(deflate::get_btype(bits), deflate::BType::DynamicHuffmanCodes);
+    EXPECT_EQ(bits.bits_read(), 2);
 }
 
 TEST(Deflate, get_btype_reserved_error_zero_offset) {
     auto data = make_bytes(0x03);
-    EXPECT_EQ(deflate::get_btype(data), deflate::BType::ReservedError);
+    zippee::bitspan bits(data);
+    EXPECT_EQ(deflate::get_btype(bits), deflate::BType::ReservedError);
+    EXPECT_EQ(bits.bits_read(), 2);
 }
 
 TEST(Deflate, get_btype_nocompression_3bit_offset) {
@@ -79,6 +95,7 @@ TEST(Deflate, get_btype_nocompression_3bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(3);
     EXPECT_EQ(deflate::get_btype(bits), deflate::BType::NoCompression);
+    EXPECT_EQ(bits.bits_read(), 5);
 }
 
 TEST(Deflate, get_btype_fixed_huffman_3bit_offset) {
@@ -86,6 +103,7 @@ TEST(Deflate, get_btype_fixed_huffman_3bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(3);
     EXPECT_EQ(deflate::get_btype(bits), deflate::BType::FixedHuffmanCodes);
+    EXPECT_EQ(bits.bits_read(), 5);
 }
 
 TEST(Deflate, get_btype_dynamic_huffman_3bit_offset) {
@@ -93,6 +111,7 @@ TEST(Deflate, get_btype_dynamic_huffman_3bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(3);
     EXPECT_EQ(deflate::get_btype(bits), deflate::BType::DynamicHuffmanCodes);
+    EXPECT_EQ(bits.bits_read(), 5);
 }
 
 TEST(Deflate, get_btype_reserved_error_3bit_offset) {
@@ -100,6 +119,7 @@ TEST(Deflate, get_btype_reserved_error_3bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(3);
     EXPECT_EQ(deflate::get_btype(bits), deflate::BType::ReservedError);
+    EXPECT_EQ(bits.bits_read(), 5);
 }
 
 TEST(Deflate, get_btype_nocompression_7bit_offset) {
@@ -107,6 +127,7 @@ TEST(Deflate, get_btype_nocompression_7bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(7);
     EXPECT_EQ(deflate::get_btype(bits), deflate::BType::NoCompression);
+    EXPECT_EQ(bits.bits_read(), 9);
 }
 
 TEST(Deflate, get_btype_fixed_huffman_7bit_offset) {
@@ -114,6 +135,7 @@ TEST(Deflate, get_btype_fixed_huffman_7bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(7);
     EXPECT_EQ(deflate::get_btype(bits), deflate::BType::FixedHuffmanCodes);
+    EXPECT_EQ(bits.bits_read(), 9);
 }
 
 TEST(Deflate, get_btype_dynamic_huffman_7bit_offset) {
@@ -121,6 +143,7 @@ TEST(Deflate, get_btype_dynamic_huffman_7bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(7);
     EXPECT_EQ(deflate::get_btype(bits), deflate::BType::DynamicHuffmanCodes);
+    EXPECT_EQ(bits.bits_read(), 9);
 }
 
 TEST(Deflate, get_btype_reserved_error_7bit_offset) {
@@ -128,9 +151,10 @@ TEST(Deflate, get_btype_reserved_error_7bit_offset) {
     zippee::bitspan bits(data);
     bits.read_bits(7);
     EXPECT_EQ(deflate::get_btype(bits), deflate::BType::ReservedError);
+    EXPECT_EQ(bits.bits_read(), 9);
 }
 
-TEST(Deflate, dynamic_header_code_lengths1) {
+TEST(Deflate, dynamic_header_code_lengths) {
     auto data = make_bytes(0x6d, 0x8e, 0xb9, 0x72, 0x83, 0x30, 0x10, 0x40, 0xfb);
     zippee::bitspan bits(data);
     bits.read_bits(3);

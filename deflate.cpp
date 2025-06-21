@@ -44,17 +44,17 @@ std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
     return decompressed;
 }
 
-bool deflate::is_bfinal(zippee::bitspan data) {
+bool deflate::is_bfinal(zippee::bitspan& data) {
     auto flag_bit = data.read_bits(1);
     return flag_bit;
 }
 
-deflate::BType deflate::get_btype(zippee::bitspan data) {
+deflate::BType deflate::get_btype(zippee::bitspan& data) {
     auto type_bits = data.read_bits(2);
     return BType(std::to_underlying<std::byte>(std::byte{static_cast<uint8_t>(type_bits)}));
 }
 
-std::vector<size_t> deflate::dynamic_header_code_lengths(zippee::bitspan data) {
+std::vector<size_t> deflate::dynamic_header_code_lengths(zippee::bitspan& data) {
     const std::array<size_t, 19> code_length_idx_to_alphabet = {
         16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
     };

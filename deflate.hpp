@@ -23,8 +23,8 @@ enum class BType : std::underlying_type_t<std::byte> {
 
 std::vector<std::byte> decompress(std::span<std::byte> data);
 
-bool is_bfinal(zippee::bitspan data);
-BType get_btype(zippee::bitspan data);
+bool is_bfinal(zippee::bitspan& data);
+BType get_btype(zippee::bitspan& data);
 
 struct DynamicHeader {
     size_t hlit = 0;
@@ -34,7 +34,7 @@ struct DynamicHeader {
     std::map<size_t, size_t> coodes;
 };
 
-std::vector<size_t> dynamic_header_code_lengths(zippee::bitspan data);
+std::vector<size_t> dynamic_header_code_lengths(zippee::bitspan& data);
 
 struct HuffmanCode {
     size_t code;
