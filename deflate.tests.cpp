@@ -147,15 +147,15 @@ TEST(Deflate, bitlengths_to_huffman_3_2_2) {
     std::vector<size_t> bitlengths = {3, 3, 3, 3, 3, 2, 4, 4};
     auto huffman_table = bitlengths_to_huffman(bitlengths);
 
-    auto result = std::map<size_t, size_t>({
-        {0b010, 0},
-        {0b011, 1},
-        {0b100, 2},
-        {0b101, 3},
-        {0b110, 4},
-        {0b00, 5},
-        {0b1110, 6},
-        {0b1111, 7}
+    auto result = std::vector<HuffmanCode>({
+        {0b010, 3, 0},
+        {0b011, 3, 1},
+        {0b100, 3, 2},
+        {0b101, 3, 3},
+        {0b110, 3, 4},
+        {0b00, 2, 5},
+        {0b1110, 4, 6},
+        {0b1111, 4, 7}
     });
 
     EXPECT_EQ(huffman_table, result);

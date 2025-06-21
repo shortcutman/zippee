@@ -105,7 +105,8 @@ std::vector<size_t> deflate::dynamic_header_code_lengths(zippee::bitspan data) {
     return code_lengths;
 }
 
-std::map<size_t, size_t> deflate::bitlengths_to_huffman(const std::vector<size_t>& bitlengths) {
+std::vector<deflate::HuffmanCode>
+deflate::bitlengths_to_huffman(const std::vector<size_t>& bitlengths) {
     std::array<size_t, 19> bl_count{};
     size_t max_bits = 0;
     size_t max_codes = 0;
@@ -127,12 +128,15 @@ std::map<size_t, size_t> deflate::bitlengths_to_huffman(const std::vector<size_t
     }
 
     //assign numerical values to all codes
-    std::map<size_t, size_t> huffman_to_symbol;
+    std::vector<HuffmanCode> huffman_to_symbol;
     for (size_t n = 0; n < bitlengths.size(); n++) {
         auto bit_length = bitlengths[n];
         if (bit_length != 0) {
-            // huffman_to_symbol[n] = next_code[bit_length];
-            huffman_to_symbol[next_code[bit_length]] = n;
+            huffman_to_symbol.push_back(HuffmanCode{
+                .code = next_code[bit_length],
+                .code_length = bit_length,
+                .symbol = n
+            });
             next_code[bit_length]++;
         }
     }

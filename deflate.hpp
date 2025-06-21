@@ -35,6 +35,15 @@ struct DynamicHeader {
 };
 
 std::vector<size_t> dynamic_header_code_lengths(zippee::bitspan data);
-std::map<size_t, size_t> bitlengths_to_huffman(const std::vector<size_t>& bitlengths);
+
+struct HuffmanCode {
+    size_t code;
+    size_t code_length;
+    size_t symbol;
+
+    bool operator==(const HuffmanCode& a) const = default;
+};
+std::vector<HuffmanCode> bitlengths_to_huffman(const std::vector<size_t>& bitlengths);
+
 
 }
