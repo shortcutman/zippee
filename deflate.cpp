@@ -139,7 +139,6 @@ std::vector<deflate::HuffmanCode> deflate::reverse_codes(const std::vector<Huffm
 size_t deflate::get_symbol_for_code(const std::vector<HuffmanCode>& codes, zippee::bitspan& data) {
     assert(std::is_sorted(codes.begin(), codes.end()));
 
-    const size_t min_bits = codes.front().code_length;
     for (auto& code : codes) {
         auto bits = data.peek_bits(code.code_length);
         if (bits == code.code) {
