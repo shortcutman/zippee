@@ -27,6 +27,10 @@ size_t zippee::bitspan::bits_read() const {
 }
 
 uint32_t zippee::bitspan::peek_bits(uint8_t bits) {
+    if (bits == 0) {
+        return 0;
+    }
+
     int64_t bits_remain = static_cast<int64_t>(_data.size() * 8) - _bit_offset - bits;
     if (bits_remain < 0) {
         throw std::runtime_error("Not enough bits available.");

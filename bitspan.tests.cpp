@@ -19,6 +19,16 @@ std::array<std::byte, sizeof...(Ts)> make_bytes(Ts&&... args) noexcept {
 
 using namespace zippee;
 
+TEST(BitSpan, peak_and_read_0bits) {
+    auto data = make_bytes(0xff);
+    auto span = bitspan(std::span{data});
+
+    EXPECT_EQ(span.peek_bits(0), 0x00);
+    EXPECT_EQ(span.bits_read(), 0);
+    EXPECT_EQ(span.read_bits(0), 0x00);
+    EXPECT_EQ(span.bits_read(), 0);
+}
+
 TEST(BitSpan, peak_and_read_4bits_from_8bits) {
     auto data = make_bytes(0xff);
     auto span = bitspan(std::span{data});
