@@ -26,14 +26,6 @@ std::vector<std::byte> decompress(std::span<std::byte> data);
 bool is_bfinal(zippee::bitspan& data);
 BType get_btype(zippee::bitspan& data);
 
-struct DynamicHeader {
-    size_t hlit = 0;
-    size_t hdist = 0;
-    size_t hclen = 0;
-    std::array<size_t, 19> code_length_codes{};
-    std::map<size_t, size_t> coodes;
-};
-
 void dynamic_block(zippee::bitspan& data);
 std::vector<size_t> dynamic_header_code_lengths(size_t count, zippee::bitspan& data);
 
