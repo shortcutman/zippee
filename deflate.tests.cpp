@@ -158,7 +158,10 @@ TEST(Deflate, dynamic_header_code_lengths) {
     auto data = make_bytes(0x6d, 0x8e, 0xb9, 0x72, 0x83, 0x30, 0x10, 0x40, 0xfb);
     zippee::bitspan bits(data);
     bits.read_bits(3);
-    auto code_lengths = deflate::dynamic_header_code_lengths(bits);
+    bits.read_bits(5); //hlit
+    bits.read_bits(5); //hdist
+    auto code_length_code = bits.read_bits(4) + 4;
+    auto code_lengths = deflate::dynamic_header_code_lengths(code_length_code, bits);
 
     EXPECT_EQ(code_lengths, std::vector<size_t>({
         4, 0, 5, 0, 4, 3, 2, 3, 3, 0, 0, 0, 0, 0, 0, 0, 4, 3, 5
@@ -261,4 +264,43 @@ TEST(Deflate, get_code_asymmetrical) {
     EXPECT_EQ(symbol, 4);
     symbol = deflate::get_symbol_for_code(codes, bits);
     EXPECT_EQ(symbol, 6);
+}
+
+TEST(Deflate, read_code_length_sequence1) {
+    auto codes = std::vector<deflate::HuffmanCode>({
+        {0b00, 2, 6},
+        {0b010, 3, 5},
+        {0b110, 3, 7},
+        {0b001, 3, 8},
+        {0b101, 3, 17},
+        {0b0011, 4, 0},
+        {0b1011, 4, 4},
+        {0b0111, 4, 16},
+        {0b01111, 5, 2},
+        {0b11111, 5, 18}
+    });
+
+    std::array<size_t, 270> expected = {
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 7, 0, 6, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0, 8, 0, 0, 0, 7, 5, 7, 7, 7, 7, 6, 7, 6, 8, 8, 0, 0, 
+        0, 0, 0, 0, 0, 6, 6, 6, 7, 6, 7, 6, 5, 8, 6, 7, 7, 7, 7, 7, 
+        7, 8, 6, 6, 7, 6, 6, 8, 8, 8, 0, 0, 0, 0, 0, 0, 5, 6, 5, 6, 
+        5, 6, 6, 5, 5, 6, 6, 6, 6, 5, 6, 7, 7, 6, 6, 5, 5, 6, 6, 7, 
+        7, 7, 7, 0, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 6, 7, 6, 8, 
+        7, 0, 0, 8, 0, 0, 0, 8, 7 };
+
+    auto data = make_bytes(0xfb, 0x7c, 0x85, 0x87, 0x3a, 0x85, 0xe5, 0x3, 0x93, 0x94, 0x80, 0x31, 0xa, 0x3e, 0x3, 0x86, 0x24, 0x9d, 0x10, 0x2, 0x89, 0x43, 0xd8, 0x20, 0x81, 0x8f, 0xc9, 0xbf, 0x7, 0x13, 0xcf, 0xa4, 0x88, 0xb7);
+    zippee::bitspan bits(data);
+    bits.read_bits(1);
+    
+    auto result = deflate::read_code_length_seq(270, codes, bits);
+
+    EXPECT_TRUE(std::equal(expected.begin(), expected.end(), result.begin()));
 }

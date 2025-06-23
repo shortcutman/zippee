@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <print>
 #include <utility>
 
 std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
@@ -30,7 +29,7 @@ std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
 
         case BType::DynamicHuffmanCodes:
         {
-            auto code_length_bytes = dynamic_header_code_lengths(data, 3);
+            dynamic_block(bits);
         }
         break;
 
@@ -54,19 +53,25 @@ deflate::BType deflate::get_btype(zippee::bitspan& data) {
     return BType(std::to_underlying<std::byte>(std::byte{static_cast<uint8_t>(type_bits)}));
 }
 
-std::vector<size_t> deflate::dynamic_header_code_lengths(zippee::bitspan& data) {
+void deflate::dynamic_block(zippee::bitspan& data) {
+    auto literal_count = data.read_bits(5) + 257;
+    auto distance_count = data.read_bits(5) + 1;
+    auto code_length_count = data.read_bits(4) + 4;
+
+    auto code_length_bytes = dynamic_header_code_lengths(code_length_count, data);
+    auto huffman_table = reverse_codes(bitlengths_to_huffman(code_length_bytes));
+
+    std::vector<size_t> lit_code_lengths = read_code_length_seq(literal_count, huffman_table, data);
+    std::vector<size_t> dist_values = read_code_length_seq(distance_count, huffman_table, data);
+}
+
+std::vector<size_t> deflate::dynamic_header_code_lengths(size_t count, zippee::bitspan& data) {
     const std::array<size_t, 19> code_length_idx_to_alphabet = {
         16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15
     };
+    std::vector<size_t> code_lengths(code_length_idx_to_alphabet.size(), 0);
 
-    uint8_t hlit = data.read_bits(5) + 257;
-    uint8_t hdist = data.read_bits(5) + 1;
-    uint8_t hclen = data.read_bits(4);
-
-    size_t hclen_qty = hclen + 4;
-    std::vector<size_t> code_lengths(19, 0);
-
-    for (size_t i = 0; i < hclen_qty; i++) {
+    for (size_t i = 0; i < count; i++) {
         size_t val = data.read_bits(3);
         code_lengths[code_length_idx_to_alphabet[i]] = val;
     }
@@ -150,4 +155,36 @@ size_t deflate::get_symbol_for_code(const std::vector<HuffmanCode>& codes, zippe
     throw std::runtime_error("Couldn't find a matching code.");
 
     return 0;
+}
+
+std::vector<size_t> deflate::read_code_length_seq(size_t count, const std::vector<HuffmanCode>& codes, zippee::bitspan& data) {
+    std::vector<size_t> code_length_seq;
+    code_length_seq.reserve(count);
+
+    for (size_t i = 0; i < count;) {
+        auto val = get_symbol_for_code(codes, data);
+        size_t repeat_count = 0;
+
+        if (val < 16) {
+            repeat_count = 1;
+        } else if (val == 16) {
+            repeat_count = data.read_bits(2) + 3;
+            val = code_length_seq.back();
+        } else if (val == 17) {
+            repeat_count = data.read_bits(3) + 3;
+            val = 0;
+        } else if (val == 18) {
+            repeat_count = data.read_bits(7) + 11;
+            val = 0;
+        } else {
+            throw std::runtime_error("Unexpected symbol.");
+        }
+
+        code_length_seq.insert(code_length_seq.end(), repeat_count, val);
+        i += repeat_count;
+
+        assert(i == code_length_seq.size()); //this should always line up
+    }
+
+    return code_length_seq;
 }

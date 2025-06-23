@@ -34,7 +34,8 @@ struct DynamicHeader {
     std::map<size_t, size_t> coodes;
 };
 
-std::vector<size_t> dynamic_header_code_lengths(zippee::bitspan& data);
+void dynamic_block(zippee::bitspan& data);
+std::vector<size_t> dynamic_header_code_lengths(size_t count, zippee::bitspan& data);
 
 struct HuffmanCode {
     size_t code;
@@ -49,5 +50,7 @@ struct HuffmanCode {
 std::vector<HuffmanCode> bitlengths_to_huffman(const std::vector<size_t>& bitlengths);
 std::vector<HuffmanCode> reverse_codes(const std::vector<HuffmanCode>& codes);
 size_t get_symbol_for_code(const std::vector<HuffmanCode>& codes, zippee::bitspan& data);
+
+std::vector<size_t> read_code_length_seq(size_t count, const std::vector<HuffmanCode>& codes, zippee::bitspan& data);
 
 }
