@@ -190,6 +190,62 @@ std::vector<size_t> deflate::read_code_length_seq(size_t count, const std::vecto
     return code_length_seq;
 }
 
+std::tuple<size_t, size_t> deflate::read_length_and_distance(
+    size_t symbol,
+    const std::vector<HuffmanCode>& distance_codes,
+    zippee::bitspan& data) {
+    assert(symbol > 256 && symbol < 286);
+
+    const std::array<uint16_t, 30> length_extras = {
+        0, //padding
+        0, 0, 0, 0, 0, 0, 0, 0, // no extras
+        1, 1, 1, 1, // 1-bit extras
+        2, 2, 2, 2, // 2-bit extras
+        3, 3, 3, 3, // 3-bit extras
+        4, 4, 4, 4, // 4-bit extras
+        5, 5, 5, 5, // 5-bit extras
+        0 // no extras
+    };
+    const std::array<uint16_t, 30> length_starts = {
+        0, //padding
+        3, 4, 5, 6, 7, 8, 9, 10, // no extras
+        11, 13, 15, 17, // 1-bit extras
+        19, 23, 27, 31, // 2-bit extras
+        35, 43, 51, 59, // 3-bit extras
+        67, 83, 99, 115, // 4-bit extras
+        131, 163, 195, 227, // 5-bit extras
+        258 // no extras
+    };
+
+    size_t length = length_starts[symbol & 0xff];
+    auto length_extra = data.read_bits(length_extras[symbol & 0xff]);
+    length += length_extra;
+
+    const std::array<std::tuple<uint16_t, uint16_t>, 30> distance_table = {{
+        {0, 1}, {0, 2}, {0, 3}, {0, 4}, // no extras
+        {1, 5}, {1, 7}, // 1-bit extras
+        {2, 9}, {2, 13}, // 2-bit extras
+        {3, 17}, {3, 25}, // 3-bit extras
+        {4, 33}, {4, 49}, // 4-bit extras
+        {5, 65}, {5, 97}, // 5-bit extras
+        {6, 129}, {6, 193}, // 6-bit extras
+        {7, 257}, {7, 385}, // 7-bit extras
+        {8, 513}, {8, 769}, // 8-bit extras
+        {9, 1025}, {9, 1537}, // 9-bit extras
+        {10, 2049}, {10, 3073}, // 10-bit extras
+        {11, 4097}, {11, 6145}, // 11-bit extras
+        {12, 8193}, {12, 12289}, // 12-bit extras
+        {13, 16385}, {13, 24577}, // 13-bit extras
+    }};
+
+    auto distance_symbol = get_symbol_for_code(distance_codes, data);
+    size_t distance = std::get<1>(distance_table[distance_symbol]);
+    auto distance_extra = data.read_bits(std::get<0>(distance_table[distance_symbol]));
+    distance += distance_extra;
+
+    return {length, distance};
+}
+
 void deflate::duplicate_string(std::vector<std::byte>& data, size_t length, size_t distance) {
     assert(distance > 0 && distance <= 32768);
 

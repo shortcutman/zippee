@@ -44,6 +44,7 @@ std::vector<HuffmanCode> reverse_codes(const std::vector<HuffmanCode>& codes);
 size_t get_symbol_for_code(const std::vector<HuffmanCode>& codes, zippee::bitspan& data);
 
 std::vector<size_t> read_code_length_seq(size_t count, const std::vector<HuffmanCode>& codes, zippee::bitspan& data);
+std::tuple<size_t, size_t> read_length_and_distance(size_t symbol, const std::vector<HuffmanCode>& distance_codes, zippee::bitspan& data);
 void duplicate_string(std::vector<std::byte>& data, size_t length, size_t distance);
 
 }

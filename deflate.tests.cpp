@@ -305,6 +305,44 @@ TEST(Deflate, read_code_length_sequence1) {
     EXPECT_TRUE(std::equal(expected.begin(), expected.end(), result.begin()));
 }
 
+TEST(Deflate, read_length_and_distance_no_extras) {
+    auto codes = std::vector<deflate::HuffmanCode>({
+        {0b00, 2, 8},
+        {0b10, 2, 10},
+        {0b01, 2, 12},
+        {0b0011, 4, 0},
+        {0b1011, 4, 9},
+        {0b0111, 4, 13},
+        {0b1111, 4, 14}
+    });
+
+    auto data = make_bytes(0x03);
+    zippee::bitspan bits(data);
+
+    auto length_and_distance = deflate::read_length_and_distance(257, codes, bits);
+    EXPECT_EQ(std::get<0>(length_and_distance), 3);
+    EXPECT_EQ(std::get<1>(length_and_distance), 1);
+}
+
+TEST(Deflate, read_length_and_distance_extras) {
+    auto codes = std::vector<deflate::HuffmanCode>({
+        {0b00, 2, 8},
+        {0b10, 2, 10},
+        {0b01, 2, 12},
+        {0b0011, 4, 0},
+        {0b1011, 4, 9},
+        {0b0111, 4, 13},
+        {0b1111, 4, 14}
+    });
+
+    auto data = make_bytes(0xc6);
+    zippee::bitspan bits(data);
+
+    auto length_and_distance = deflate::read_length_and_distance(274, codes, bits);
+    EXPECT_EQ(std::get<0>(length_and_distance), 49);
+    EXPECT_EQ(std::get<1>(length_and_distance), 23);
+}
+
 TEST(Deflate, duplicate_string_last_byte_one) {
     const auto expected = make_bytes(0x11, 0x11);
     std::vector<std::byte> data = {std::byte{0x11}};
