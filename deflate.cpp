@@ -59,7 +59,7 @@ void deflate::dynamic_block(zippee::bitspan& data) {
     auto code_length_count = data.read_bits(4) + 4;
 
     auto code_length_bytes = dynamic_header_code_lengths(code_length_count, data);
-    auto huffman_table = reverse_codes(bitlengths_to_huffman(code_length_bytes));
+    auto huffman_table = bitlengths_to_huffman(code_length_bytes);
 
     std::vector<size_t> lit_code_lengths = read_code_length_seq(literal_count, huffman_table, data);
     std::vector<size_t> dist_values = read_code_length_seq(distance_count, huffman_table, data);
@@ -116,6 +116,7 @@ deflate::bitlengths_to_huffman(const std::vector<size_t>& bitlengths) {
     }
 
     std::sort(huffman_to_symbol.begin(), huffman_to_symbol.end());
+    huffman_to_symbol = reverse_codes(huffman_to_symbol);
 
     return huffman_to_symbol;
 }
