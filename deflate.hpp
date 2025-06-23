@@ -26,7 +26,7 @@ std::vector<std::byte> decompress(std::span<std::byte> data);
 bool is_bfinal(zippee::bitspan& data);
 BType get_btype(zippee::bitspan& data);
 
-void dynamic_block(zippee::bitspan& data);
+std::vector<std::byte> dynamic_block(zippee::bitspan& data);
 std::vector<size_t> dynamic_header_code_lengths(size_t count, zippee::bitspan& data);
 
 struct HuffmanCode {

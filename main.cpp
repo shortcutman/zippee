@@ -1,15 +1,22 @@
 
 #include "zip.hpp"
+#include "deflate.hpp"
+
 
 #include <cstdint>
 #include <fstream>
 #include <iostream>
+#include <print>
 #include <string>
 #include <vector>
 
-
-void println(const char* c) {
-    std::cout << c << std::endl;
+namespace {
+    void writeout(const std::vector<std::byte>& d) {
+        std::ofstream decompressed_file("outfile.txt", std::ios::binary);
+        for (auto b : d) {
+            decompressed_file.write(reinterpret_cast<char*>(&b), sizeof(b));
+        }
+    }
 }
 
 int main(int argc, char** argv) {
@@ -17,7 +24,7 @@ int main(int argc, char** argv) {
     std::ifstream file(filepath, std::ios::binary | std::ios::ate);
 
     if (!file.is_open()) {
-        println("file is not open");
+        std::println("file is not open");
         return -1;
     }
 
@@ -44,6 +51,16 @@ int main(int argc, char** argv) {
     for (auto& h : headers) {
         std::cout << h << std::endl;
     }
+
+    auto actualData = std::span{data.begin(), data.end()};
+    auto localHeader = zip::read_local_header(actualData);
+    if (localHeader) {
+        std::cout << "has local file header of size: " << localHeader.value().header_size() << std::endl;
+    }
+
+    auto decompressed = deflate::decompress(std::span{data.begin() + localHeader.value().header_size(), data.end()});
+
+    writeout(decompressed);
 
     return 0;
 }
