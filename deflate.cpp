@@ -189,3 +189,14 @@ std::vector<size_t> deflate::read_code_length_seq(size_t count, const std::vecto
 
     return code_length_seq;
 }
+
+void deflate::duplicate_string(std::vector<std::byte>& data, size_t length, size_t distance) {
+    assert(distance > 0 && distance <= 32768);
+
+    const size_t startIdx = data.size() - distance;
+    const size_t endIdx = data.size() - 1;
+    for (size_t i = 0; i < length; i++) {
+        auto copyIdx = startIdx + (i % (endIdx - startIdx + 1));
+        data.push_back(data[copyIdx]);
+    }
+}

@@ -304,3 +304,47 @@ TEST(Deflate, read_code_length_sequence1) {
 
     EXPECT_TRUE(std::equal(expected.begin(), expected.end(), result.begin()));
 }
+
+TEST(Deflate, duplicate_string_last_byte_one) {
+    const auto expected = make_bytes(0x11, 0x11);
+    std::vector<std::byte> data = {std::byte{0x11}};
+    deflate::duplicate_string(data, 1, 1);
+    EXPECT_TRUE(std::equal(data.begin(), data.end(), expected.begin()));
+}
+
+TEST(Deflate, duplicate_string_last_byte_one_with_prefix) {
+    const auto expected = make_bytes(0x11, 0x12, 0x12);
+    std::vector<std::byte> data = {std::byte{0x11}, std::byte{0x12}};
+    deflate::duplicate_string(data, 1, 1);
+    EXPECT_TRUE(std::equal(data.begin(), data.end(), expected.begin()));
+}
+
+TEST(Deflate, duplicate_string_last_byte_three) {
+    const auto expected = make_bytes(0x11, 0x12, 0x13, 0x13, 0x13);
+    std::vector<std::byte> data = {std::byte{0x11}, std::byte{0x12}, std::byte{0x13}};
+    deflate::duplicate_string(data, 2, 1);
+    EXPECT_TRUE(std::equal(data.begin(), data.end(), expected.begin()));
+}
+
+TEST(Deflate, duplicate_string_earlier_byte_wrap_two) {
+    const auto expected = make_bytes(0x11, 0x12, 0x13, 0x12, 0x13, 0x12);
+    std::vector<std::byte> data = {std::byte{0x11}, std::byte{0x12}, std::byte{0x13}};
+    deflate::duplicate_string(data, 3, 2);
+    EXPECT_TRUE(std::equal(data.begin(), data.end(), expected.begin()));
+}
+
+TEST(Deflate, duplicate_string_earlier_byte_wrap_three) {
+    const auto expected = make_bytes(0x11, 0x12, 0x13, 0x11, 0x12, 0x13, 0x11, 0x12);
+    std::vector<std::byte> data = {std::byte{0x11}, std::byte{0x12}, std::byte{0x13}};
+    deflate::duplicate_string(data, 5, 3);
+    EXPECT_TRUE(std::equal(data.begin(), data.end(), expected.begin()));
+}
+
+TEST(Deflate, duplicate_string_earlier_bytes_two) {
+    const auto expected = make_bytes(0x11, 0x12, 0x13, 0x11, 0x12);
+    std::vector<std::byte> data = {std::byte{0x11}, std::byte{0x12}, std::byte{0x13}};
+    deflate::duplicate_string(data, 2, 3);
+    EXPECT_TRUE(std::equal(data.begin(), data.end(), expected.begin()));
+}
+
+
