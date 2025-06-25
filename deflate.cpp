@@ -17,7 +17,7 @@ std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
     switch (get_btype(bits)) {
         case BType::NoCompression:
         {
-            throw std::runtime_error("No compression unimplemented.");
+            uncompressed_block(bits, decompressed);
         }
         break;
 
@@ -51,6 +51,19 @@ bool deflate::is_bfinal(zippee::bitspan& data) {
 deflate::BType deflate::get_btype(zippee::bitspan& data) {
     auto type_bits = data.read_bits(2);
     return BType(std::to_underlying<std::byte>(std::byte{static_cast<uint8_t>(type_bits)}));
+}
+
+void deflate::uncompressed_block(zippee::bitspan& data, std::vector<std::byte>& output) {
+    data.round_to_next_byte();
+    auto len = data.read_bits(16);
+    auto nlen = data.read_bits(16);
+
+    if (len != ~nlen) {
+        throw std::runtime_error("LEN and NLEN do not match.");
+    }
+
+    auto uncompressed_data_span = data.to_span().subspan(0, len);
+    output.insert(output.end(), uncompressed_data_span.begin(), uncompressed_data_span.end());
 }
 
 void deflate::dynamic_block(zippee::bitspan& data, std::vector<std::byte>& output) {
