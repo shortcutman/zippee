@@ -56,3 +56,8 @@ uint32_t zippee::bitspan::read_bits(uint8_t bits) {
 void zippee::bitspan::round_to_next_byte() {
     _bit_offset += _bit_offset % 8;
 }
+
+std::span<std::byte> zippee::bitspan::to_span() const {
+    auto bytes_in = _bit_offset / 8;
+    return std::span{&_data[bytes_in], _data.size() - bytes_in};
+}

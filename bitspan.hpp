@@ -29,5 +29,7 @@ namespace zippee {
         uint32_t read_bits(uint8_t bits);
 
         void round_to_next_byte();
+
+        std::span<std::byte> to_span() const;
     };
 }
