@@ -52,3 +52,7 @@ uint32_t zippee::bitspan::read_bits(uint8_t bits) {
     _bit_offset += bits;
     return ret;
 }
+
+void zippee::bitspan::round_to_next_byte() {
+    _bit_offset += _bit_offset % 8;
+}

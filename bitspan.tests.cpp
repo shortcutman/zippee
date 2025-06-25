@@ -111,3 +111,43 @@ TEST(BitSpan, subsequent_peeks_and_reads) {
     EXPECT_EQ(span.read_bits(4), 0xf);
     EXPECT_EQ(span.bits_read(), 16);
 }
+
+TEST(BitSpan, round_to_next_byte_subbyte_reads) {
+    auto data = make_bytes(0x12, 0x34);
+    bitspan bits(data);
+
+    EXPECT_EQ(bits.peek_bits(4), 0x02);
+    EXPECT_EQ(bits.bits_read(), 0);
+    bits.round_to_next_byte();
+    EXPECT_EQ(bits.bits_read(), 0);
+
+    EXPECT_EQ(bits.read_bits(4), 0x02);
+    EXPECT_EQ(bits.bits_read(), 4);
+    bits.round_to_next_byte();
+    EXPECT_EQ(bits.bits_read(), 8);
+
+    EXPECT_EQ(bits.read_bits(4), 0x04);
+    EXPECT_EQ(bits.bits_read(), 12);
+    bits.round_to_next_byte();
+    EXPECT_EQ(bits.bits_read(), 16);
+}
+
+TEST(BitSpan, round_to_next_byte_fullbyte_reads) {
+    auto data = make_bytes(0x12, 0x34);
+    bitspan bits(data);
+
+    EXPECT_EQ(bits.peek_bits(8), 0x12);
+    EXPECT_EQ(bits.bits_read(), 0);
+    bits.round_to_next_byte();
+    EXPECT_EQ(bits.bits_read(), 0);
+
+    EXPECT_EQ(bits.read_bits(8), 0x12);
+    EXPECT_EQ(bits.bits_read(), 8);
+    bits.round_to_next_byte();
+    EXPECT_EQ(bits.bits_read(), 8);
+
+    EXPECT_EQ(bits.read_bits(8), 0x34);
+    EXPECT_EQ(bits.bits_read(), 16);
+    bits.round_to_next_byte();
+    EXPECT_EQ(bits.bits_read(), 16);
+}
