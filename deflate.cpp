@@ -29,7 +29,7 @@ std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
 
         case BType::DynamicHuffmanCodes:
         {
-            return dynamic_block(bits);
+            dynamic_block(bits, decompressed);
         }
         break;
 
@@ -53,7 +53,7 @@ deflate::BType deflate::get_btype(zippee::bitspan& data) {
     return BType(std::to_underlying<std::byte>(std::byte{static_cast<uint8_t>(type_bits)}));
 }
 
-std::vector<std::byte> deflate::dynamic_block(zippee::bitspan& data) {
+void deflate::dynamic_block(zippee::bitspan& data, std::vector<std::byte>& output) {
     auto literal_count = data.read_bits(5) + 257;
     auto distance_count = data.read_bits(5) + 1;
     auto code_length_count = data.read_bits(4) + 4;
@@ -67,25 +67,21 @@ std::vector<std::byte> deflate::dynamic_block(zippee::bitspan& data) {
     auto lit_huffman_table = bitlengths_to_huffman(lit_code_lengths);
     auto dist_huffman_table = bitlengths_to_huffman(dist_code_lengths);
 
-    std::vector<std::byte> decompressed;
-
     while (true) {
         auto symbol = get_symbol_for_code(lit_huffman_table, data);
         if (symbol < 256) {
-            decompressed.push_back(std::byte{static_cast<uint8_t>(symbol)});
+            output.push_back(std::byte{static_cast<uint8_t>(symbol)});
         }
         else if (symbol == 256) {
             break; //end of block
         } else if (symbol > 256 && symbol < 286) {
             //distance etc
             auto lgth_and_dist = read_length_and_distance(symbol, dist_huffman_table, data);
-            duplicate_string(decompressed, std::get<0>(lgth_and_dist), std::get<1>(lgth_and_dist));
+            duplicate_string(output, std::get<0>(lgth_and_dist), std::get<1>(lgth_and_dist));
         } else {
             throw std::runtime_error("Non compliant symbol.");
         }
     }
-
-    return decompressed;
 }
 
 std::vector<size_t> deflate::dynamic_header_code_lengths(size_t count, zippee::bitspan& data) {
