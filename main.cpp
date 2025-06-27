@@ -28,13 +28,13 @@ int main(int argc, char** argv) {
         return -1;
     }
 
-    auto size = file.tellg();
+    size_t size = file.tellg();
     
     std::vector<std::byte> data;
     data.reserve(size);
     file.seekg(0);
 
-    for (size_t i; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         auto getbyte = file.get();
         if (getbyte == std::ifstream::traits_type::eof()) {
             break;
