@@ -2,6 +2,7 @@
 #include "zip.hpp"
 #include "deflate.hpp"
 
+#include "vendor/CLI11.hpp"
 
 #include <cstdint>
 #include <fstream>
@@ -20,22 +21,34 @@ namespace {
 }
 
 int main(int argc, char** argv) {
-    std::string filepath = "***REMOVED***";
-    std::ifstream file(filepath, std::ios::binary | std::ios::ate);
 
-    if (!file.is_open()) {
+    std::string input_filepath;
+    bool list_files = false;
+
+    CLI::App app{"zippee can decompress data contained with a ZIP file that is compressed with DEFLATE.", "zippee"};
+    app.add_option("input", input_filepath, "Input file.")->required();
+
+    try {
+        app.parse(argc, argv);
+    } catch (const CLI::ParseError& e) {
+        return app.exit(e);
+    }
+
+    std::ifstream input_file(input_filepath, std::ios::binary | std::ios::ate);
+
+    if (!input_file.is_open()) {
         std::println("file is not open");
         return -1;
     }
 
-    size_t size = file.tellg();
+    size_t size = input_file.tellg();
     
     std::vector<std::byte> data;
     data.reserve(size);
-    file.seekg(0);
+    input_file.seekg(0);
 
     for (size_t i = 0; i < size; i++) {
-        auto getbyte = file.get();
+        auto getbyte = input_file.get();
         if (getbyte == std::ifstream::traits_type::eof()) {
             break;
         }
