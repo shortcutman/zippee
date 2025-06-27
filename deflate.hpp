@@ -39,6 +39,8 @@ BType get_btype(zippee::bitspan& data);
 
 void uncompressed_block(zippee::bitspan& data, std::vector<std::byte>& output);
 
+void fixed_block(zippee::bitspan& data, std::vector<std::byte>& output);
+
 void dynamic_block(zippee::bitspan& data, std::vector<std::byte>& output);
 std::vector<size_t> dynamic_header_code_lengths(size_t count, zippee::bitspan& data);
 

@@ -7,7 +7,34 @@
 
 #include <algorithm>
 #include <cassert>
+#include <print>
 #include <utility>
+
+namespace {
+    std::vector<deflate::HuffmanCode> fixed_huffman_lit_codelengths()  {
+        std::vector<size_t> code_lengths;
+
+        for (size_t i = 0; i < 288; i++) {
+            if (i < 144) {
+                code_lengths.push_back(8);
+            } else if (i < 256) {
+                code_lengths.push_back(9);
+            } else if (i < 280) {
+                code_lengths.push_back(7);
+            } else if (i < 288) {
+                code_lengths.push_back(8);
+            }
+        }
+
+        assert(code_lengths.size() == 288);
+
+        return deflate::bitlengths_to_huffman(code_lengths);
+    }
+
+    std::vector<deflate::HuffmanCode> fixed_huffman_dist_codelengths() {
+        return deflate::bitlengths_to_huffman(std::vector<size_t>(32, 5));
+    }
+}
 
 std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
     std::vector<std::byte> decompressed;
@@ -17,13 +44,15 @@ std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
     switch (get_btype(bits)) {
         case BType::NoCompression:
         {
+            std::println("Reading uncompressed block; note, untested!");
             uncompressed_block(bits, decompressed);
         }
         break;
 
         case BType::FixedHuffmanCodes:
         {
-            throw std::runtime_error("Fixed Huffman codes unimplemented.");
+            std::println("Reading fixed huffman compressed block; note, untested!");
+            fixed_block(bits, decompressed);
         }
         break;
 
@@ -35,6 +64,7 @@ std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
 
         case BType::ReservedError:
         {
+            std::println("Reading reserved block; likely corruption!");
             throw std::runtime_error("Reserved block type unhandled.");
         }
         break;
@@ -64,6 +94,13 @@ void deflate::uncompressed_block(zippee::bitspan& data, std::vector<std::byte>& 
 
     auto uncompressed_data_span = data.to_span().subspan(0, len);
     output.insert(output.end(), uncompressed_data_span.begin(), uncompressed_data_span.end());
+}
+
+void deflate::fixed_block(zippee::bitspan& data, std::vector<std::byte>& output) {
+    auto lit_huffman_table = fixed_huffman_lit_codelengths();
+    auto dist_huffman_table = fixed_huffman_dist_codelengths();
+
+    decompress_huffman(data, output, lit_huffman_table, dist_huffman_table);
 }
 
 void deflate::dynamic_block(zippee::bitspan& data, std::vector<std::byte>& output) {
@@ -288,6 +325,7 @@ std::tuple<size_t, size_t> deflate::read_length_and_distance(
 
 void deflate::duplicate_string(std::vector<std::byte>& data, size_t length, size_t distance) {
     assert(distance > 0 && distance <= 32768);
+    assert(distance < data.size());
 
     const size_t startIdx = data.size() - distance;
     const size_t endIdx = data.size() - 1;
