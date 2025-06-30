@@ -22,12 +22,12 @@ namespace {
 }
 
 int main(int argc, char** argv) {
-
     std::string input_filepath;
-    bool list_files = false;
+    bool list_contents = false;
 
     CLI::App app{"zippee can decompress data contained with a ZIP file that is compressed with DEFLATE.", "zippee"};
     app.add_option("input", input_filepath, "Input file.")->required();
+    app.add_flag("--list", list_contents, "List all contents of ZIP only.");
 
     try {
         app.parse(argc, argv);
@@ -68,9 +68,12 @@ int main(int argc, char** argv) {
 
         auto local_header_data = data_span.subspan(h.relative_offset_of_local_header, data_span.size() - h.relative_offset_of_local_header);
         auto local_header = zip::read_local_header(local_header_data).value();
-        auto compressed_span = data_span.subspan(h.relative_offset_of_local_header + local_header.header_size(), data_span.size() - h.relative_offset_of_local_header - local_header.header_size());
-        auto decompressed = deflate::decompress(compressed_span);
-        writeout(local_header.file_name, decompressed);
+
+        if (!list_contents) {
+            auto compressed_span = data_span.subspan(h.relative_offset_of_local_header + local_header.header_size(), data_span.size() - h.relative_offset_of_local_header - local_header.header_size());
+            auto decompressed = deflate::decompress(compressed_span);
+            writeout(local_header.file_name, decompressed);
+        }
     }
 
     return 0;
