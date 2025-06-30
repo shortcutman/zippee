@@ -54,7 +54,6 @@ std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
 
             case BType::FixedHuffmanCodes:
             {
-                std::println("Reading fixed huffman compressed block; note, untested!");
                 fixed_block(bits, decompressed);
             }
             break;
