@@ -1,6 +1,11 @@
 
-#include "zip.hpp"
+//------------------------------------------------------------------------------
+// main.cpp
+//------------------------------------------------------------------------------
+
+#include "crc32.hpp"
 #include "deflate.hpp"
+#include "zip.hpp"
 
 #include "vendor/CLI11.hpp"
 
@@ -59,12 +64,11 @@ int main(int argc, char** argv) {
     auto data_span = std::span{data};
 
     auto eocd = zip::search_for_eocd(data_span);
-    std::cout << eocd.value() << std::endl;
-
     auto centralDir = data_span.subspan(eocd.value().offset_start_central_directory, data_span.size() - eocd.value().offset_start_central_directory);
     auto headers = zip::read_central_directory_headers(centralDir);
+
     for (auto& h : headers) {
-        std::cout << h << std::endl;
+        std::println("Found {}.", h.file_name);
 
         auto local_header_data = data_span.subspan(h.relative_offset_of_local_header, data_span.size() - h.relative_offset_of_local_header);
         auto local_header = zip::read_local_header(local_header_data).value();
@@ -72,7 +76,17 @@ int main(int argc, char** argv) {
         if (!list_contents) {
             auto compressed_span = data_span.subspan(h.relative_offset_of_local_header + local_header.header_size(), data_span.size() - h.relative_offset_of_local_header - local_header.header_size());
             auto decompressed = deflate::decompress(compressed_span);
-            writeout(local_header.file_name, decompressed);
+
+            auto crc32 = zip::crc32(decompressed);
+            // below does not honour 4.4.4 of APPNOTE.TXT and check for data descriptor
+            auto check_crc32 = local_header.crc_32 == 0 ? h.crc_32 : local_header.crc_32;
+
+            if (check_crc32 != crc32) {
+                std::println("CRC32 does not match for {}.", local_header.file_name);
+            } else {
+                writeout(local_header.file_name, decompressed);
+                std::println("Decompressed and wrote out {}.", local_header.file_name);
+            }            
         }
     }
 
