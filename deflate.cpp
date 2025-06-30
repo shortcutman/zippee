@@ -39,36 +39,40 @@ namespace {
 std::vector<std::byte> deflate::decompress(std::span<std::byte> data) {
     std::vector<std::byte> decompressed;
     zippee::bitspan bits(data);
-    
-    bool isLast = is_bfinal(bits);
-    switch (get_btype(bits)) {
-        case BType::NoCompression:
-        {
-            std::println("Reading uncompressed block; note, untested!");
-            uncompressed_block(bits, decompressed);
-        }
-        break;
 
-        case BType::FixedHuffmanCodes:
-        {
-            std::println("Reading fixed huffman compressed block; note, untested!");
-            fixed_block(bits, decompressed);
-        }
-        break;
+    bool isLast = true;
 
-        case BType::DynamicHuffmanCodes:
-        {
-            dynamic_block(bits, decompressed);
-        }
-        break;
+    do {
+        isLast = is_bfinal(bits);
+        switch (get_btype(bits)) {
+            case BType::NoCompression:
+            {
+                std::println("Reading uncompressed block; note, untested!");
+                uncompressed_block(bits, decompressed);
+            }
+            break;
 
-        case BType::ReservedError:
-        {
-            std::println("Reading reserved block; likely corruption!");
-            throw std::runtime_error("Reserved block type unhandled.");
+            case BType::FixedHuffmanCodes:
+            {
+                std::println("Reading fixed huffman compressed block; note, untested!");
+                fixed_block(bits, decompressed);
+            }
+            break;
+
+            case BType::DynamicHuffmanCodes:
+            {
+                dynamic_block(bits, decompressed);
+            }
+            break;
+
+            case BType::ReservedError:
+            {
+                std::println("Reading reserved block; likely corruption!");
+                throw std::runtime_error("Reserved block type unhandled.");
+            }
+            break;
         }
-        break;
-    }
+    } while (!isLast);
 
     return decompressed;
 }
