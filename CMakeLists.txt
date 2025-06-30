@@ -10,6 +10,7 @@ add_compile_options(-Wall)
 
 add_library(zip
     bitspan.cpp
+    crc32.cpp
     deflate.cpp
     zip.cpp
 )
@@ -36,6 +37,7 @@ enable_testing()
 add_executable(
     zip_tests
     bitspan.tests.cpp
+    crc32.tests.cpp
     deflate.tests.cpp
     zip.tests.cpp
 )
