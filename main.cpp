@@ -17,9 +17,7 @@ namespace {
         std::replace(adjusted.begin(), adjusted.end(), '/', '_');
 
         std::ofstream decompressed_file(adjusted, std::ios::binary);
-        for (auto b : d) {
-            decompressed_file.write(reinterpret_cast<char*>(&b), sizeof(b));
-        }
+        decompressed_file.write(reinterpret_cast<char*>(const_cast<std::byte*>(&d[0])), d.size() * sizeof(std::byte));
     }
 }
 
