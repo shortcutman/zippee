@@ -350,26 +350,26 @@ TEST(ZipTests, read_two_central_directory_header_no_dynamic_content) {
     auto frontHeader = result.front();
 
     for (auto& header : result) {
-        EXPECT_EQ(frontHeader.signature, 0x02014b50);
-        EXPECT_EQ(frontHeader.version_made_by, 0x0314);
-        EXPECT_EQ(frontHeader.version_needed, 0x14);
-        EXPECT_EQ(frontHeader.general_purpose_bit_flag, 0x08);
-        EXPECT_EQ(frontHeader.compression_method, 0x08);
-        EXPECT_EQ(frontHeader.last_mod_file_time, 0x581a);
-        EXPECT_EQ(frontHeader.last_mod_file_date, 0x5a7f);
-        EXPECT_EQ(frontHeader.crc_32, 0x54809df5);
-        EXPECT_EQ(frontHeader.compressed_size, 0x0164);
-        EXPECT_EQ(frontHeader.uncompressed_size, 0x0202);
-        EXPECT_EQ(frontHeader.file_name_length, 0x00);
-        EXPECT_EQ(frontHeader.extra_field_length, 0x00);
-        EXPECT_EQ(frontHeader.file_comment_length, 0x00);
-        EXPECT_EQ(frontHeader.disk_number_start, 0x00);
-        EXPECT_EQ(frontHeader.internal_file_attributes, 0x00);
-        EXPECT_EQ(frontHeader.external_file_attributes, 0x81a40000);
-        EXPECT_EQ(frontHeader.relative_offset_of_local_header, 0x00);
-        EXPECT_TRUE(frontHeader.file_name.empty());
-        EXPECT_TRUE(frontHeader.extra_field.empty());
-        EXPECT_TRUE(frontHeader.file_comment.empty());
+        EXPECT_EQ(header.signature, 0x02014b50);
+        EXPECT_EQ(header.version_made_by, 0x0314);
+        EXPECT_EQ(header.version_needed, 0x14);
+        EXPECT_EQ(header.general_purpose_bit_flag, 0x08);
+        EXPECT_EQ(header.compression_method, 0x08);
+        EXPECT_EQ(header.last_mod_file_time, 0x581a);
+        EXPECT_EQ(header.last_mod_file_date, 0x5a7f);
+        EXPECT_EQ(header.crc_32, 0x54809df5);
+        EXPECT_EQ(header.compressed_size, 0x0164);
+        EXPECT_EQ(header.uncompressed_size, 0x0202);
+        EXPECT_EQ(header.file_name_length, 0x00);
+        EXPECT_EQ(header.extra_field_length, 0x00);
+        EXPECT_EQ(header.file_comment_length, 0x00);
+        EXPECT_EQ(header.disk_number_start, 0x00);
+        EXPECT_EQ(header.internal_file_attributes, 0x00);
+        EXPECT_EQ(header.external_file_attributes, 0x81a40000);
+        EXPECT_EQ(header.relative_offset_of_local_header, 0x00);
+        EXPECT_TRUE(header.file_name.empty());
+        EXPECT_TRUE(header.extra_field.empty());
+        EXPECT_TRUE(header.file_comment.empty());
     }
 }
 
