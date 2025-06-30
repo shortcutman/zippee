@@ -164,14 +164,12 @@ std::vector<deflate::HuffmanCode>
 deflate::bitlengths_to_huffman(const std::vector<size_t>& bitlengths) {
     std::vector<size_t> bl_count(bitlengths.size(), 0);
     size_t max_bits = 0;
-    size_t max_codes = 0;
     //count the number of codes for each code length
     for (size_t i = 0; i < bitlengths.size(); i++) {
         if (bitlengths[i] == 0) continue;
 
         bl_count[bitlengths[i]]++;
         max_bits = std::max(max_bits, bitlengths[i]);
-        max_codes++;
     }
 
     //find the numerical value of the smallest code for each code length
