@@ -12,8 +12,11 @@
 #include <vector>
 
 namespace {
-    void writeout(const std::vector<std::byte>& d) {
-        std::ofstream decompressed_file("outfile.txt", std::ios::binary);
+    void writeout(const std::string& filename, const std::vector<std::byte>& d) {
+        std::string adjusted = filename;
+        std::replace(adjusted.begin(), adjusted.end(), '/', '_');
+
+        std::ofstream decompressed_file(adjusted, std::ios::binary);
         for (auto b : d) {
             decompressed_file.write(reinterpret_cast<char*>(&b), sizeof(b));
         }
@@ -37,7 +40,7 @@ int main(int argc, char** argv) {
     std::ifstream input_file(input_filepath, std::ios::binary | std::ios::ate);
 
     if (!input_file.is_open()) {
-        std::println("file is not open");
+        std::println("Unable to open file.");
         return -1;
     }
 
@@ -55,25 +58,22 @@ int main(int argc, char** argv) {
 
         data.push_back(std::byte{static_cast<uint8_t>(getbyte)});
     }
+    auto data_span = std::span{data};
 
-    auto result = zip::search_for_eocd(std::span{data.begin(), data.end()});
-    std::cout << result.value() << std::endl;
+    auto eocd = zip::search_for_eocd(data_span);
+    std::cout << eocd.value() << std::endl;
 
-    auto centralDir = std::span{data.begin() + result.value().offset_start_central_directory, data.end()};
+    auto centralDir = data_span.subspan(eocd.value().offset_start_central_directory, data_span.size() - eocd.value().offset_start_central_directory);
     auto headers = zip::read_central_directory_headers(centralDir);
     for (auto& h : headers) {
         std::cout << h << std::endl;
+
+        auto local_header_data = data_span.subspan(h.relative_offset_of_local_header, data_span.size() - h.relative_offset_of_local_header);
+        auto local_header = zip::read_local_header(local_header_data).value();
+        auto compressed_span = data_span.subspan(h.relative_offset_of_local_header + local_header.header_size(), data_span.size() - h.relative_offset_of_local_header - local_header.header_size());
+        auto decompressed = deflate::decompress(compressed_span);
+        writeout(local_header.file_name, decompressed);
     }
-
-    auto actualData = std::span{data.begin(), data.end()};
-    auto localHeader = zip::read_local_header(actualData);
-    if (localHeader) {
-        std::cout << "has local file header of size: " << localHeader.value().header_size() << std::endl;
-    }
-
-    auto decompressed = deflate::decompress(std::span{data.begin() + localHeader.value().header_size(), data.end()});
-
-    writeout(decompressed);
 
     return 0;
 }
